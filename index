@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Think in Bars!</title>
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MV3yEaB+P+VeRv5sY0hVlRPzUf6T4sJmRjXWlPN8zmH+LPN5/u+WsohV3yFo" crossorigin="anonymous">
+  <!-- KaTeX JS -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-pm558ppHF8wkW4M4CeQaSgSjgMzTPO7O6ftTWt7IuVqR8ObvX2CyFN5M0X+qLVu" crossorigin="anonymous"></script>
+  <!-- KaTeX auto-render extension -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURNyg51HnJ8vKumO/RvGFoRPfpeEHRLA" crossorigin="anonymous"></script>
+
+  <style>
+    /* Basic reset and body styling for full viewport coverage */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', sans-serif; /* Using Inter font */
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+      width: 100vw;
+      height: 100vh;
+      max-width: 100vw;
+    }
+    
+    /* Flex container for the entire layout (canvas + toolbar) */
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Container for the canvases, allowing it to take available space */
+    #canvas-container {
+      flex: 1; /* Takes up remaining vertical space */
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 16/9; /* Maintain aspect ratio for the drawing area */
+      width: 100vw;
+      height: auto;
+      max-height: calc(100vh - 80px); /* Adjust based on toolbar height */
+      margin: 0 auto;
+      background-color: white;
+    }
+    
+    /* Individual canvas styling - absolute positioning to layer them */
+    #background-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      background-color: white;
+    }
+    
+    #main-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+    }
+    
+    #drawingCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 3;
+      pointer-events: none; /* Allows clicks to pass through when not in draw mode */
+    }
+    
+    /* Toolbar styling - responsive and scrollable */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: #eee;
+      border-top: 2px solid #ccc;
+      gap: 30px;
+      flex-wrap: nowrap; /* Prevent wrapping for horizontal scroll */
+      overflow-x: auto; /* Enable horizontal scrolling for small screens */
+      max-height: 10vh; /* Limit toolbar height */
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+      scrollbar-width: none; /* Hide scrollbar for Firefox */
+    }
+    /* Hide scrollbar for Chrome, Safari, Opera */
+    .toolbar::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Tool button styling */
+    .tool-button {
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      margin: 4px;
+      padding: 8px;
+      min-width: 44px; /* Ensure minimum touch target size */
+      min-height: 44px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px; /* Rounded corners */
+      transition: background 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+    }
+
+    .tool-button:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .tool-button:active {
+      transform: scale(0.95);
+    }
+    
+    .tool-button img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+    
+    /* Color button specific styling */
+    .color-button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    /* Active state for tool buttons */
+    .tool-button.active {
+      outline: 3px solid #007bff;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(0, 123, 255, 0.4);
+    }
+    
+    /* Title banner styling */
+    .title-banner {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-weight: bold;
+      background: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 10;
+      text-align: center;
+    }
+    
+    /* About Modal styling */
+    #aboutModal, #problemGeneratorModal, #versionHistoryModal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      max-width: 90%; /* Responsive width */
+      background: white;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      z-index: 999;
+      font-size: 16px;
+      line-height: 1.6;
+      border: 1px solid #ddd;
+      max-height: 80vh; /* Limit modal height */
+      overflow-y: auto; /* Enable scrolling for modal content */
+    }
+
+    #aboutModal h2, #problemGeneratorModal h2, #versionHistoryModal h2 {
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    #aboutModal ul, #versionHistoryModal ul {
+      list-style-type: disc;
+      margin-left: 20px;
+      margin-bottom: 15px;
+    }
+
+    #aboutModal li, #versionHistoryModal li {
+      margin-bottom: 5px;
+    }
+    
+    /* Bar label styling (for dynamically created input elements) */
+    .bar-label {
+      color: black !important;
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid #ccc !important;
+      border-radius: 4px;
+      padding: 2px 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      max-width: 150px; /* Adjust maximum width as needed */
+      overflow: hidden;
+      white-space: nowrap; /* Prevent wrapping */
+      text-overflow: ellipsis; /* Add ellipsis if text overflows */
+      /* Make transparent by default */
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    /* Split menu styling */
+    #split-menu {
+      display: flex;
+      flex-wrap: wrap; /* Allow buttons to wrap */
+      gap: 4px;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #split-menu button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+
+    #split-menu button:hover {
+      background: #0056b3;
+    }
+
+    /* Problem Generator Modal specific styles */
+    #problemGeneratorModal textarea {
+      width: calc(100% - 20px);
+      min-height: 80px;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      resize: vertical;
+    }
+
+    #problemGeneratorModal button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s ease;
+      margin-left: 10px;
+    }
+
+    #problemGeneratorModal button.generate {
+      background: #28a745;
+      color: white;
+    }
+    #problemGeneratorModal button.generate:hover {
+      background: #218838;
+    }
+    #problemGeneratorModal button.close {
+      background: #6c757d;
+      color: white;
+    }
+    #problemGeneratorModal button.close:hover {
+      background: #5a6268;
+    }
+    /* Moved solve button styling to global scope as it's now a top-level button */
+    .top-left-buttons .solve {
+      background: #FFA500; /* Orange color for A° button */
+      color: white;
+    }
+    .top-left-buttons .solve:hover {
+      background: #CC8400; /* Darker orange on hover */
+    }
+
+    #problemOutput {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 5px;
+      min-height: 50px;
+      white-space: normal; /* Allow wrapping */
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+      word-wrap: break-word; /* Break long words */
+      font-style: italic;
+      color: #343a40;
+    }
+    /* Solution output is now part of solutionBubble */
+
+    .loading-indicator {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 1.2em;
+      color: #007bff;
+    }
+    .loading-indicator::after {
+      content: ' .';
+      animation: dots 1s steps(5, end) infinite;
+    }
+    @keyframes dots {
+      0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+      40% { color: #007bff; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+      60% { text-shadow: .25em 0 0 #007bff, .5em 0 0 rgba(0,0,0,0); }
+      80%, 100% { text-shadow: .25em 0 0 #007bff, .5em 0 0 #007bff; }
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 768px) {
+      .toolbar {
+        padding: 10px 15px;
+        gap: 15px;
+      }
+      .tool-button {
+        width: 40px;
+        height: 40px;
+        min-width: 38px;
+        min-height: 38px;
+        padding: 6px;
+      }
+      .tool-button img {
+        width: 24px;
+        height: 24px;
+      }
+      .color-button {
+        width: 30px;
+        height: 30px;
+      }
+      .title-banner {
+        font-size: 20px;
+        padding: 4px 8px;
+      }
+      .title-banner div:first-child {
+        font-size: 24px;
+      }
+      .title-banner div:last-child {
+        font-size: 14px;
+      }
+      #aboutModal, #problemGeneratorModal, #versionHistoryModal {
+        padding: 15px;
+        font-size: 14px;
+      }
+      /* Adjust button positions for smaller screens */
+      .top-left-buttons, .top-right-buttons {
+        top: 8px;
+      }
+      .top-left-buttons button, .top-right-buttons button {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      div[style*="bottom: 90px"] { /* Copyright notice */
+        bottom: 60px !important; /* Adjust if toolbar height changes */
+        font-size: 10px !important;
+      }
+    }
+
+    /* Persistent Problem Display Styling */
+    #persistentProblemDisplay {
+      position: absolute;
+      top: 80px; /* Adjust based on title banner height */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%; /* Adjust width as needed */
+      max-width: 900px; /* Max width for readability */
+      background-color: #f0f8ff; /* Light blue background */
+      border: 1px solid #cceeff; /* Light blue border */
+      border-radius: 8px;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-size: 1.1em;
+      color: #333;
+      text-align: center;
+      z-index: 9; /* Below modals, above canvas */
+      display: none; /* Hidden by default */
+      line-height: 1.5;
+    }
+
+    /* Styles for new form elements in modal */
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-group input[type="text"], .form-group input[type="number"] {
+        width: calc(100% - 22px); /* Adjust for padding and border */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: 'Inter', sans-serif;
+    }
+    .checkbox-group, .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .checkbox-group label, .radio-group label {
+        display: flex;
+        align-items: center;
+        font-weight: normal;
+    }
+    .checkbox-group input[type="checkbox"], .radio-group input[type="radio"] {
+        margin-right: 5px;
+    }
+
+    /* Solution Bubble Styling */
+    #solutionBubble {
+      display: none; /* Hidden by default */
+      position: absolute;
+      top: 50%;
+      right: 20px; /* Position on the right side */
+      transform: translateY(-50%);
+      width: 300px;
+      max-width: 90%; /* Responsive width */
+      background-color: #e6f7ff; /* Lighter blue background */
+      border: 1px solid #91d5ff; /* Light blue border */
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 998; /* Below modals, above canvas */
+      flex-direction: column; /* For vertical layout of content and buttons */
+      gap: 10px;
+    }
+    #solutionBubble h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #0056b3;
+    }
+    #solutionContent {
+        min-height: 80px;
+        overflow-y: auto;
+        max-height: 200px; /* Limit height and allow scrolling */
+        font-size: 0.95em;
+        line-height: 1.4;
+        color: #333;
+    }
+    #solutionBubble button {
+        padding: 8px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    #solutionBubble button:hover {
+        background: #0056b3;
+    }
+    #solutionBubble .close-button {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #666;
+    }
+    #solutionBubble .close-button:hover {
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        #solutionBubble {
+            width: calc(100% - 40px); /* Adjust width for small screens */
+            right: 20px;
+            left: 20px;
+            transform: translateY(-50%);
+        }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Left Buttons -->
+  <div class="top-left-buttons" style="position: absolute; top: 12px; left: 12px; z-index: 99; display: flex; gap: 8px;">
+    <!-- About Button -->
+    <button onclick="toggleAbout()" title="About"
+      style="padding: 8px 12px; font-size: 14px; /* Adjusted padding */
+             background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
+      About
+    </button>
+
+    <!-- Version Functions Button -->
+    <button onclick="toggleVersionHistory()" title="View Version Features"
+      style="padding: 8px 12px; font-size: 14px;
+             background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
+      Versions
+    </button>
+
+    <!-- ✨ Generate Problem Button -->
+    <button onclick="toggleProblemGenerator()" class="tool-button" title="Generate a Word Problem with AI"
+            style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
+                   background: linear-gradient(45deg, #FFD700, #FFA500); color: black; border: 1px solid #FFC107; font-weight: bold;
+                   box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
+      Q°
+    </button>
+
+    <!-- 💡 AI Solve Button (Standalone) -->
+    <button onclick="solveProblem()" class="tool-button solve" title="Get AI Solution/Tips for the current problem"
+            style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
+                   box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
+      A°
+    </button>
+  </div>
+
+  <!-- Title Banner -->
+  <div class="title-banner">
+    <div style="font-size:32px; font-weight:bold;">Think in Bars!</div>
+    <div style="font-size:18px; font-weight:normal; margin-top:4px;">A Structured Way of Problem Solving</div>
+  </div>
+
+  <!-- Persistent Problem Display -->
+  <div id="persistentProblemDisplay"></div>
+
+  <!-- Top Right Buttons -->
+  <div class="top-right-buttons" style="position: absolute; top: 12px; right: 12px; z-index: 99; display: flex; gap: 8px;">
+    <!-- Export as Image Button -->
+    <button onclick="exportCanvas()" title="Export as Image (Screenshot)"
+      style="padding: 8px 12px; font-size: 14px;
+             background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
+      Export Image
+    </button>
+
+    <!-- Clear All Button -->
+    <button onclick="clearAll()" title="Clear All" 
+      style="padding: 8px 12px; font-size: 14px;
+             background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
+      Clear All
+    </button>
+  </div>
+
+  <!-- Canvas Container for layering drawing elements -->
+  <div id="canvas-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="main-canvas"></canvas>
+    <canvas id="drawingCanvas"></canvas>
+  </div>
+  
+  <!-- Toolbar for controls -->
+  <div class="toolbar" id="toolbar">
+    <!-- Grid Size Slider -->
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="tool-button" title="Grid Size">
+        <img src="https://img.icons8.com/ios-filled/30/grid.png" alt="Grid Icon"/>
+      </button>
+      <input id="gridSlider" type="range" min="40" max="120" value="80" oninput="gridSize=parseInt(this.value); resizeCanvas();">
+    </div>
+
+    <!-- Drawing Tools -->
+    <div style="display:flex;align-items:center;gap:8px;">
+      <img src="https://img.icons8.com/ios-glyphs/30/pencil-tip.png" title="Pen Size" style="width: 28px; height: 28px;" alt="Pen Icon">
+      <input type="range" min="1" max="10" value="5" oninput="penSize=this.value">
+      <button onclick="toggleDrawMode(this, 'black')" class="tool-button color-button" style="background:black" title="Black Pen"></button>
+      <button onclick="toggleDrawMode(this, 'red')" class="tool-button color-button" style="background:red" title="Red Pen"></button>
+      <button onclick="toggleDrawMode(this, 'blue')" class="tool-button color-button" style="background:blue" title="Blue Pen"></button>
+      <button onclick="undoDraw()" class="tool-button" title="Undo Drawing">
+        <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
+      </button>
+      <button onclick="redoDraw()" class="tool-button" title="Redo Drawing">
+        <img src="https://img.icons8.com/ios-glyphs/30/redo.png" alt="Redo Icon"/>
+      </button>
+    </div>
+
+    <!-- Bar Manipulation Tools -->
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span id="bar-tools" style="display:flex;gap:6px;">
+        <button onclick="addLabel('text')" class="tool-button" title="Label Text">
+          <span style="font-size: 20px;">ABC</span>
+        </button>
+        <button onclick="addLabel('num')" class="tool-button" title="Label Number">
+          <span style="font-size: 20px;">123</span>
+        </button>
+        <button onclick="toggleArrow()" class="tool-button" title="Toggle Arrow">
+          <img src="https://img.icons8.com/ios-glyphs/30/resize-diagonal.png" alt="Arrow Icon"/>
+        </button>
+        <button onclick="deleteSelectedBar()" class="tool-button" title="Delete Bar">
+          <img src="https://img.icons8.com/ios-glyphs/30/trash--v1.png" alt="Delete Icon"/>
+        </button>
+        <button onclick="splitBar()" class="tool-button" title="Split Bar">
+          <img src="https://img.icons8.com/ios-glyphs/30/divide.png" alt="Split Icon"/>
+        </button>
+      </span>
+      
+      <!-- Bar Color/Type Selection -->
+      <button onclick="addBar('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
+      <button onclick="addBar('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
+      <button onclick="addBar('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
+      <button onclick="addBar('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
+      <button onclick="addBar('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
+      <button onclick="addBar('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
+
+      <!-- Bar Undo/Redo -->
+      <button onclick="undoBar()" class="tool-button" title="Undo Bar Action">
+        <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
+      </button>
+      <button onclick="redoBar()" class="tool-button" title="Redo Bar Action">
+        <img src="https://img.icons8.com/ios-glyphs/30/redo.png" alt="Redo Icon"/>
+      </button>
+    </div>
+  </div>
+
+  <!-- About Modal (hidden by default) -->
+  <div id="aboutModal">
+    <h2 style="margin-top:0;">📘 About This Tool</h2>
+    <p><strong>Think in Bars!</strong> is a visual teaching aid designed to support pupils in solving word problems more effectively.</p>
+    <p>It aims to:</p>
+    <ul>
+      <li>Help pupils <strong>understand and solve</strong> problems using <strong>bar models</strong></li>
+      <li>Guide them to <strong>visualize mathematical relationships</strong> clearly</li>
+      <li>Support teachers in <strong>explaining problem-solving strategies</strong> more effectively</li>
+    </ul>
+    <p>"Think in Bars!" was created based on real classroom needs, especially for pupils who struggle to process word problems abstractly. By turning numbers into visuals, pupils can truly <em>see the math</em> behind the words.</p>
+    <p>This tool was developed by <strong>Mr. Hui Kar Loong</strong><br>
+    (<em>Guru Cemerlang Matematik Sekolah Rendah</em>)<br>
+    with the assistance of <strong>ChatGPT</strong> and **Gemini** by Google.</p>
+    
+    <div style="text-align:right; margin-top:16px;">
+      <button onclick="toggleAbout()" style="padding: 6px 12px; background: #dc3545; color: white;
+                   border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease;">Close</button>
+    </div>
+  </div>
+
+  <!-- Version History Modal (hidden by default) -->
+  <div id="versionHistoryModal">
+    <h2 style="margin-top:0;">🚀 Version Features</h2>
+    
+    <h3>Version 1.0 Features (Initial Release)</h3>
+    <ul>
+      <li><strong>Basic Bar Drawing:</strong> Create and manipulate solid-colored bar models.</li>
+      <li><strong>Bar Resizing & Dragging:</strong> Easily adjust the size and position of bars on the canvas.</li>
+      <li><strong>Adjustable Grid:</strong> Customize the background grid size for precise alignment.</li>
+      <li><strong>Freehand Drawing:</strong> Use a pen tool with multiple colors for annotations, including undo/redo functionality.</li>
+      <li><strong>About Section:</strong> Access information about the tool and its purpose.</li>
+      <li><strong>Export Canvas:</strong> Save your bar models as an image (PNG).</li>
+      <li><strong>Clear All:</strong> Reset the canvas by clearing all bars and drawings.</li>
+    </ul>
+
+    <h3>Version 2.0 Features (Enhancements)</h3>
+    <ul>
+      <li><strong>New Bar Types:</strong> Introduce dashed bars for representing unknown or removed quantities.</li>
+      <li><strong>Bar Splitting:</strong> Divide existing bars into multiple equal segments.</li>
+      <li><strong>Dynamic Labels:</strong> Add draggable text and number labels directly to bars for clear annotation.</li>
+      <li><strong>Toggleable Arrows:</strong> Add directional arrows to bars to indicate quantities or relationships.</li>
+      <li><strong>AI-Powered Problem Generator (Q°):</strong> Generate unique word problems based on specified number types (whole, fractions, decimals, percentage), ranges, operations, themes, and keywords. Fractions are rendered using LaTeX.</li>
+      <li><strong>AI-Powered Solution Provider (A°):</strong> Get concise, step-by-step solutions or tips for generated problems, presented in an easy-to-follow carousel format with bold subtitles and LaTeX math rendering.</li>
+      <li><strong>Persistent Problem Display:</strong> The generated problem remains visible below the title for easy reference.</li>
+      <li><strong>Enhanced Responsiveness:</strong> Improved layout and usability across various screen sizes (mobile, tablet, desktop).</li>
+      <li><strong>Keyboard Shortcuts:</strong> Quick access to common actions like undo/redo, delete, toggle arrow, add bar, and clear all.</li>
+    </ul>
+
+    <div style="text-align:right; margin-top:16px;">
+      <button onclick="toggleVersionHistory()" style="padding: 6px 12px; background: #6c757d; color: white;
+                   border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease;">Close</button>
+    </div>
+  </div>
+
+  <!-- Problem Generator Modal -->
+  <div id="problemGeneratorModal">
+    <h2>✨ Generate a Word Problem</h2>
+    
+    <div class="form-group">
+        <label>Number Type:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="numberType" value="whole"> Whole Numbers</label>
+            <label><input type="checkbox" name="numberType" value="fractions"> Fractions</label>
+            <label><input type="checkbox" name="numberType" value="decimals"> Decimals</label>
+            <label><input type="checkbox" name="numberType" value="percentage"> Percentage</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="minNumberRange">Minimum Value:</label>
+        <input type="number" id="minNumberRange" value="1" min="0">
+    </div>
+    <div class="form-group">
+        <label for="maxNumberRange">Maximum Value:</label>
+        <input type="number" id="maxNumberRange" value="100" min="0">
+    </div>
+
+    <div class="form-group">
+        <label>Operations:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="operation" value="addition" checked> Addition (+)</label>
+            <label><input type="checkbox" name="operation" value="subtraction"> Subtraction (-)</label>
+            <label><input type="checkbox" name="operation" value="multiplication"> Multiplication (x)</label>
+            <label><input type="checkbox" name="operation" value="division"> Division (÷)</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Theme:</label>
+        <div class="radio-group">
+            <label><input type="radio" name="problemTheme" value="any" checked> Any</label>
+            <label><input type="radio" name="problemTheme" value="personal"> Personal</label>
+            <label><input type="radio" name="problemTheme" value="work"> Work</label>
+            <label><input type="radio" name="problemTheme" value="family"> Family</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Language:</label>
+        <div class="radio-group">
+            <label><input type="radio" name="problemLanguage" value="English" checked> English</label>
+            <label><input type="radio" name="problemLanguage" value="Malay"> Malay</label>
+            <label><input type="radio" name="problemLanguage" value="Chinese"> Chinese</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="problemKeywords">Keywords/Topic (optional):</label>
+        <textarea id="problemKeywords" placeholder="e.g., 'total number of items', 'difference in height'"></textarea>
+    </div>
+
+    <div style="text-align:right;">
+      <button class="generate" onclick="generateProblem()">✨ Generate</button>
+      <button class="close" onclick="toggleProblemGenerator()">Close</button>
+    </div>
+    <div id="loadingIndicator" class="loading-indicator">Generating problem</div>
+    <div id="problemOutput">Your generated problem will appear here.</div>
+    <!-- Solution output is now handled by solutionBubble -->
+  </div>
+
+  <!-- Solution Bubble (hidden by default) -->
+  <div id="solutionBubble">
+      <h3>Solution Tips</h3>
+      <div id="solutionContent"></div>
+      <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+          <button id="prevStepBtn" onclick="showPreviousStep()">Previous</button>
+          <button id="nextStepBtn" onclick="showNextStep()">Next</button>
+      </div>
+      <button class="close-button" onclick="closeSolutionBubble()">&times;</button>
+  </div>
+
+  <!-- Copyright Notice -->
+  <div style="position: fixed; bottom: 90px; right: 12px; font-size: 12px; color: #777; z-index: 50;">
+    © 2025 Hui Kar Loong. All rights reserved.
+  </div>
+
+  <script>
+    // Get references to the canvas elements and their 2D rendering contexts
+    const bgCanvas = document.getElementById('background-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    const drawingCtx = drawingCanvas.getContext('2d');
+    const persistentProblemDisplay = document.getElementById('persistentProblemDisplay');
+    
+    // Grid settings: dynamically set min/max based on window height
+    const minGrid = Math.floor((window.innerHeight - 80) / 10); // 80px for toolbar
+    const maxGrid = Math.floor((window.innerHeight - 80) / 8);
+    let gridSize = maxGrid; // Initial grid size
+    document.getElementById('gridSlider').min = minGrid;
+    document.getElementById('gridSlider').max = maxGrid;
+    document.getElementById('gridSlider').value = gridSize;
+    
+    // Application state variables
+    let bars = []; // Array to store bar objects
+    let textboxes = []; // Array to store textbox DOM elements (removed, but kept for cleanup)
+    let selectedBar = null; // Currently selected bar for manipulation
+    let selectedTextBox = null; // Currently selected textbox for manipulation (removed)
+    let penSize = 2; // Size of the drawing pen
+    let penColor = 'black'; // Color of the drawing pen
+    let isDrawing = false; // Flag for mouse drawing
+    let isTouchDrawing = false; // Flag for touch drawing
+    let currentMode = 'select'; // Current interaction mode ('select' or 'draw')
+    let isDragging = false; // Flag for dragging a bar
+    let isResizing = false; // Flag for resizing a bar
+    let dragOffsetX = 0, dragOffsetY = 0; // Offsets for dragging
+    
+    // Undo/Redo stacks for drawing and bar manipulations
+    let undoStack = []; // Stores canvas ImageData for drawing undo
+    let redoStack = []; // Stores canvas ImageData for drawing redo
+    let barUndoStack = []; // Stores deep copies of the bars array for bar undo
+    let barRedoStack = []; // Stores deep copies of the bars array for bar redo
+    
+    let drawingImage = null; // Stores the current drawing canvas image data
+    let penMode = false; // Flag to indicate if pen mode is active
+
+    // Stores the language of the last generated problem
+    let lastProblemLanguage = 'English'; 
+
+    // Solution carousel state
+    let solutionSteps = [];
+    let currentStepIndex = 0;
+
+    // Keyboard shortcuts mapping (simplified)
+    const KEYBOARD_SHORTCUTS = {
+      'KeyZ': { ctrlKey: true, shiftKey: false, func: undoBar, description: 'Undo Bar Action' },
+      'KeyY': { ctrlKey: true, shiftKey: false, func: redoBar, description: 'Redo Bar Action' },
+      'KeyZ': { ctrlKey: true, shiftKey: true, func: redoBar, description: 'Redo Bar Action (Shift+Ctrl+Z)' }, // For consistency with some systems
+      'Delete': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
+      'Backspace': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
+      // Removed save/load/export/textbox shortcuts
+      'KeyA': { func: toggleArrow, description: 'Toggle Arrow' },
+      'KeyD': { func: toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
+      'KeyB': { func: addBar, args: ['#b3e5fc'], description: 'Add Blue Bar' },
+      'KeyC': { func: clearAll, description: 'Clear All' },
+    };
+
+    /**
+     * Renders LaTeX math in a given HTML element.
+     * Uses KaTeX auto-render.
+     * @param {HTMLElement} element - The HTML element to render math in.
+     */
+    function renderMathInGivenElement(element) {
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                ],
+                throwOnError: false
+            });
+        }
+    }
+
+    /**
+     * Resizes all canvases to fit the window and redraws content.
+     * Captures current drawing before resizing to preserve it.
+     */
+    function resizeCanvas() {
+      // Save current drawing before resizing
+      if (drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+        drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
+      }
+      
+      // Calculate new dimensions based on window size and toolbar height
+      const width = window.innerWidth;
+      const height = window.innerHeight - document.getElementById('toolbar').offsetHeight; // Dynamically get toolbar height
+      
+      // Set new dimensions for all canvases
+      bgCanvas.width = canvas.width = drawingCanvas.width = width;
+      bgCanvas.height = canvas.height = drawingCanvas.height = height;
+      
+      // Redraw background grid and all bars
+      drawBackground();
+      drawAll();
+      
+      // Restore the saved drawing onto the resized drawing canvas
+      if (drawingImage) {
+        drawingCtx.putImageData(drawingImage, 0, 0);
+      }
+
+      // Update positions of HTML labels
+      updateLabels();
+      // updateTextBoxes(); // Removed as textboxes are removed
+    }
+
+    /**
+     * Draws the background grid on the background canvas.
+     */
+    function drawBackground() {
+      bgCtx.fillStyle = 'white';
+      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      // Draw fine grid lines (1/10th of gridSize)
+      bgCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+      bgCtx.lineWidth = 1;
+      for (let x = 0; x <= bgCanvas.width; x += gridSize / 10) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(x, 0);
+        bgCtx.lineTo(x, bgCanvas.height);
+        bgCtx.stroke();
+      }
+      for (let y = 0; y <= bgCanvas.height; y += gridSize / 10) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(0, y);
+        bgCtx.lineTo(bgCanvas.width, y);
+        bgCtx.stroke();
+      }
+      
+      // Draw major grid lines (gridSize)
+      bgCtx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+      for (let x = 0; x <= bgCanvas.width; x += gridSize) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(x, 0);
+        bgCtx.lineTo(x, bgCanvas.height);
+        bgCtx.stroke();
+      }
+      for (let y = 0; y <= bgCanvas.height; y += gridSize) {
+        bgCtx.beginPath();
+        bgCtx.moveTo(0, y);
+        bgCtx.lineTo(y, bgCanvas.height);
+        bgCtx.stroke();
+      }
+    }
+
+    /**
+     * Draws all bars onto the main canvas.
+     */
+    function drawAll() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear main canvas
+      
+      for (const bar of bars) {
+        // Calculate bar dimensions based on ratios and grid size
+        const bx = bar.xRatio * gridSize;
+        const by = bar.yRatio * gridSize;
+        const bw = bar.widthRatio * gridSize;
+        const bh = bar.heightRatio * gridSize;
+
+        // Draw the bar rectangle
+        ctx.fillStyle = bar.color;
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Apply dashed border if specified
+        if (bar.dashed) ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, bw, bh);
+        ctx.setLineDash([]); // Reset line dash
+
+        // Draw resize handle (small black square on the right edge)
+        ctx.fillStyle = "#000";
+        ctx.fillRect(bx + bw - 6, by + bh / 2 - 6, 12, 12);
+
+        // Draw arrow if enabled for the bar
+        if (bar.arrow) {
+          // Position arrow 20px above the bar, which is below the number label (at y-45)
+          const y = by - 20; // Adjusted from -25 to -20 to move it down further
+          ctx.strokeStyle = bar.dashed ? 'red' : '#000'; // Red arrow for dashed bars
+          ctx.lineWidth = 2; // Thicker arrow line
+
+          // Draw main arrow line
+          ctx.beginPath();  
+          ctx.moveTo(bx, y);  
+          ctx.lineTo(bx + bw, y);  
+          ctx.stroke();
+
+          // Draw arrowheads
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.beginPath();  
+          ctx.moveTo(bx + 8, y - 5);  // Adjusted from 10 to 8
+          ctx.lineTo(bx, y);  
+          ctx.lineTo(bx + 8, y + 5);  // Adjusted from 10 to 8
+          ctx.fill();
+          ctx.beginPath();  
+          ctx.moveTo(bx + bw - 8, y - 5);  // Adjusted from 10 to 8
+          ctx.lineTo(bx + bw, y);  
+          ctx.lineTo(bx + bw - 8, y + 5);  // Adjusted from 10 to 8
+          ctx.fill();
+          ctx.lineWidth = 1.5; // Reset line width
+        }
+
+        // Draw split lines if bar is split
+        if (bar.split > 1) {
+          const w = bw / bar.split; // Width of each split segment
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.lineWidth = 1;
+          for (let i = 1; i < bar.split; i++) {
+            const x = bx + i * w;
+            ctx.beginPath();
+            ctx.setLineDash([4, 2]); // Dashed split lines
+            ctx.moveTo(x, by);
+            ctx.lineTo(x, by + bh);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
+          }
+        }
+      }
+    }
+
+    /**
+     * Adds a text or number label to the selected bar.
+     * If a label of the same type already exists, it removes it.
+     * @param {string} type - 'text' for a text label, 'num' for a number label.
+     */
+    function addLabel(type) {
+      if (!selectedBar) return; // No bar selected, do nothing
+
+      // Initialize labels object if it doesn't exist
+      if (!selectedBar.labels) selectedBar.labels = {};
+
+      // If label of this type already exists, remove it and return
+      if (selectedBar.labels[type]) {
+        selectedBar.labels[type].remove();
+        delete selectedBar.labels[type];
+        drawAll(); // Redraw to update visual state if necessary (e.g., arrow)
+        return;
+      }
+
+      // Create new input element for the label
+      const label = document.createElement('input');
+      label.type = 'text';
+      label.value = type === 'text' ? 'Label' : '0'; // Default value
+      label.dataset.type = type; // Store type for later reference
+      label.classList.add('bar-label'); // Add class for styling
+
+      // Base styles for the label (initially transparent/invisible when not editing)
+      label.style.position = 'absolute';
+      label.style.fontSize = '20px';
+      label.style.zIndex = '100';
+      label.style.cursor = 'pointer';
+      label.style.width = 'auto'; // Allow width to adjust
+      label.style.minWidth = '40px'; // Adjusted minimum width
+      label.style.textAlign = type === 'num' ? 'center' : 'left'; // Center numbers
+      label.style.outline = 'none'; // Remove focus outline
+
+      // Position the label relative to the selected bar
+      const barX = selectedBar.xRatio * gridSize;
+      const barY = selectedBar.yRatio * gridSize;
+      const barWidth = selectedBar.widthRatio * gridSize;
+      
+      if (type === 'text') {
+        label.style.left = `${barX - 70}px`; // Position text label to the left of the bar
+        label.style.top = `${barY + 5}px`;
+      } else {
+        // Position number label above the bar, centered, further up to clear the arrow
+        label.style.left = `${barX + barWidth / 2 - 10}px`; // Placeholder for initial centering
+        label.style.top = `${barY - 45}px`; // Adjusted: 45px above the bar
+      }
+
+      // Event listener to show editing UI when focused
+      label.addEventListener('focus', function() {
+        this.style.background = '#fff';
+        this.style.border = '1px solid #888'; 
+        this.style.boxShadow = '0 0 2px rgba(0,0,0,0.2)';
+        this.style.padding = '1px 4px';
+        this.style.borderRadius = '3px';
+        this.style.whiteSpace = 'normal'; /* Allow wrapping when focused */
+        this.style.textOverflow = 'clip'; /* Show full text when focused */
+      });
+
+      // Event listener to hide editing UI when blurred
+      label.addEventListener('blur', function() {
+        this.style.background = 'transparent';
+        this.style.border = 'none';
+        this.style.boxShadow = 'none';
+        this.style.padding = '0';
+        this.style.borderRadius = '0';
+        this.style.whiteSpace = 'nowrap'; /* Prevent wrapping when blurred */
+        this.style.textOverflow = 'ellipsis'; /* Add ellipsis when blurred */
+      });
+
+      // Double-click to focus/edit
+      label.addEventListener('dblclick', function() {
+        this.focus();
+      });
+
+      // Dynamic width adjustment for the input field
+      const measureSpan = document.createElement('span');
+      measureSpan.style.visibility = 'hidden';
+      measureSpan.style.whiteSpace = 'pre'; // Preserve whitespace
+      measureSpan.style.fontSize = '20px';
+      measureSpan.style.fontFamily = 'Inter, sans-serif'; // Match label font
+      document.body.appendChild(measureSpan); // Append to body to measure correctly
+
+      label.addEventListener('input', function() {
+        measureSpan.textContent = this.value || ' '; // Use ' ' for empty to get a minimum width
+        const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4)); // Max 150px
+        this.style.width = `${desiredWidth}px`;
+        
+        // Re-center number labels dynamically
+        if (type === 'num') {
+          // Recalculate left position based on new width
+          const currentBarX = selectedBar.xRatio * gridSize;
+          const currentBarWidth = selectedBar.widthRatio * gridSize;
+          this.style.left = `${currentBarX + currentBarWidth / 2 - this.offsetWidth / 2}px`;
+        }
+      });
+
+      // Make all labels draggable
+      let isLabelDragging = false;
+      let labelOffsetX, labelOffsetY; // Offset from mouse click to label's top-left corner
+
+      const startDrag = (e) => {
+        if (document.activeElement !== label) { // Only start dragging if not currently editing (input is not focused)
+          e.preventDefault(); // Prevent text selection
+          isLabelDragging = true;
+          const rect = label.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          labelOffsetX = clientX - rect.left; // Distance from click X to label's left edge
+          labelOffsetY = clientY - rect.top;  // Distance from click Y to label's top edge
+        }
+      };
+
+      const duringDrag = (e) => {
+        if (!isLabelDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        // Set new position directly based on current mouse/touch position minus initial offset
+        label.style.left = `${clientX - labelOffsetX}px`;
+        label.style.top = `${clientY - labelOffsetY}px`;
+        if (e.touches) e.preventDefault(); // Prevent scrolling while dragging
+      };
+
+      const endDrag = () => {
+        isLabelDragging = false;
+      };
+
+      label.addEventListener('mousedown', startDrag);
+      label.addEventListener('touchstart', startDrag);
+      document.addEventListener('mousemove', duringDrag);
+      document.addEventListener('touchmove', duringDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
+
+      // Append the label to the canvas container
+      document.getElementById("canvas-container").appendChild(label);
+      selectedBar.labels[type] = label; // Store reference in the bar object
+      
+      // Trigger initial width calculation and positioning
+      const event = new Event('input');
+      label.dispatchEvent(event);
+      
+      // label.focus(); // Auto-focus removed, now requires double-click
+    }
+
+    // Removed addTextBox functionality
+
+    // Initial setup on window load
+    window.addEventListener('load', () => {
+      resizeCanvas(); // Set initial canvas size and draw grid
+      addBar('#b3e5fc'); // Add an initial blue bar
+      // loadState(); // Removed loadState on startup
+    });
+    
+    // Resize canvases when window is resized
+    window.addEventListener('resize', resizeCanvas);
+
+    /**
+     * Helper function to create a deep clone of the bars array,
+     * converting HTML label elements to serializable data.
+     * @returns {Array} A deep copy of the bars array with serializable label data.
+     */
+    function getSerializableBarsState() {
+      return bars.map(bar => {
+        const serializableBar = { ...bar };
+        if (serializableBar.labels) {
+          const serializedLabels = {};
+          for (const type in serializableBar.labels) {
+            const labelEl = serializableBar.labels[type];
+            serializedLabels[type] = {
+              value: labelEl.value,
+              style: {
+                left: labelEl.style.left,
+                top: labelEl.style.top,
+                width: labelEl.style.width,
+                textAlign: labelEl.style.textAlign
+              }
+            };
+          }
+          serializableBar.labels = serializedLabels;
+        }
+        return serializableBar;
+      });
+    }
+
+    /**
+     * Helper function to restore labels from serializable data.
+     * @param {Object} bar - The bar object to restore labels for.
+     * @param {Object} labelData - The serializable label data.
+     */
+    function restoreLabel(bar, type, labelData) {
+      const label = document.createElement('input');
+      label.type = 'text';
+      label.value = labelData.value || '';
+      label.dataset.type = type;
+      label.classList.add('bar-label');
+      
+      Object.assign(label.style, labelData.style);
+      label.style.position = 'absolute';
+      label.style.fontSize = '20px';
+      label.style.zIndex = '100';
+      label.style.cursor = 'pointer';
+      label.style.minWidth = '40px';
+      label.style.outline = 'none';
+
+      label.addEventListener('focus', function() {
+        this.style.background = '#fff'; this.style.border = '1px solid #888'; this.style.boxShadow = '0 0 2px rgba(0,0,0,0.2)'; this.style.padding = '1px 4px'; this.style.borderRadius = '3px';
+        this.style.whiteSpace = 'normal';
+        this.style.textOverflow = 'clip';
+      });
+      label.addEventListener('blur', function() {
+        this.style.background = 'transparent'; this.style.border = 'none'; this.style.boxShadow = 'none'; this.style.padding = '0'; this.style.borderRadius = '0';
+        this.style.whiteSpace = 'nowrap';
+        this.style.textOverflow = 'ellipsis';
+      });
+      label.addEventListener('dblclick', function() {
+        this.focus();
+      });
+      const measureSpan = document.createElement('span');
+      measureSpan.style.visibility = 'hidden'; measureSpan.style.whiteSpace = 'pre'; measureSpan.style.fontSize = '20px'; measureSpan.style.fontFamily = 'Inter, sans-serif';
+      document.body.appendChild(measureSpan);
+      label.addEventListener('input', function() {
+        measureSpan.textContent = this.value || ' '; 
+        const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4));
+        this.style.width = `${desiredWidth}px`; 
+        if (type === 'num') {
+          const barX = bar.xRatio * gridSize;
+          const barWidth = bar.widthRatio * gridSize;
+          this.style.left = `${barX + barWidth/2 - this.offsetWidth/2}px`;
+        }
+      });
+
+      let isLabelDragging = false; let offsetX, offsetY;
+      const startDrag = (e) => {
+        if (document.activeElement !== label) { e.preventDefault(); isLabelDragging = true; offsetX = e.clientX - label.getBoundingClientRect().left; offsetY = e.clientY - label.getBoundingClientRect().top; }
+      };
+      const duringDrag = (e) => {
+        if (!isLabelDragging) return; label.style.left = `${e.clientX - offsetX}px`; label.style.top = `${e.clientY - offsetY}px`;
+      };
+      const endDrag = () => { isLabelDragging = false; };
+      label.addEventListener('mousedown', startDrag);
+      label.addEventListener('touchstart', startDrag);
+      document.addEventListener('mousemove', duringDrag);
+      document.addEventListener('touchmove', duringDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
+      
+      document.getElementById("canvas-container").appendChild(label);
+      bar.labels[type] = label;
+      label.dispatchEvent(new Event('input'));
+    }
+
+    /**
+     * Adds a new bar to the canvas.
+     * @param {string} color - The fill color of the bar.
+     * @param {boolean} [dashed=false] - Whether the bar should have a dashed border.
+     */
+    function addBar(color, dashed = false) {
+      // Save current state for undo
+      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+      barRedoStack = []; // Clear redo stack on new action
+
+      // Changed default Y position for the first bar to be lower
+      let yRatio = 3; // Default Y position of 3 grid units from top (adjusted from 4)
+      if (bars.length > 0) {
+        // Position new bar below the last one
+        const last = bars[bars.length - 1];
+        yRatio = last.yRatio + 2; // 2 grid units below
+      }
+      const bar = {
+        widthRatio: 4,    // Default width of 4 grid units
+        heightRatio: 1,   // Default height of 1 grid unit
+        xRatio: 3,        // Default X position of 3 grid units from left
+        yRatio,           // Calculated Y position
+        color,
+        arrow: false,     // No arrow by default
+        dashed,           // Dashed property
+        split: 0,         // Not split by default
+        labels: {}        // Object to hold associated HTML labels
+      };
+      bars.push(bar);
+      drawAll(); // Redraw all bars
+    }
+
+    /**
+     * Toggles drawing mode on/off.
+     * @param {HTMLElement} btn - The button element that was clicked.
+     * @param {string} color - The color to set for the pen.
+     */
+    function toggleDrawMode(btn, color) {
+      const isActive = btn && btn.classList.contains('active'); // Check if button exists and is active
+      // Remove 'active' class from all color buttons
+      document.querySelectorAll('.color-button').forEach(b => b.classList.remove('active'));
+      
+      if (!isActive) {
+        if (btn) btn.classList.add('active'); // If button exists, add 'active' class to the clicked button
+        penColor = color; // Set pen color
+        penMode = true; // Enable pen mode
+        currentMode = 'draw'; // Set mode to draw
+        drawingCanvas.style.pointerEvents = 'auto'; // Enable drawing canvas interaction
+        canvas.style.pointerEvents = 'none'; // Disable main canvas interaction
+      } else {
+        penMode = false; // Disable pen mode
+        currentMode = 'select'; // Set mode to select
+        drawingCanvas.style.pointerEvents = 'none'; // Disable drawing canvas interaction
+        canvas.style.pointerEvents = 'auto'; // Enable main canvas interaction
+      }
+    }
+
+    /**
+     * Undoes the last drawing action.
+     */
+    function undoDraw() {
+      if (undoStack.length > 0) {
+        redoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state for undo
+        const lastState = undoStack.pop(); // Get previous state from undo stack
+        drawingCtx.putImageData(lastState, 0, 0); // Restore previous state
+        drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height); // Update drawingImage
+      }
+    }
+
+    /**
+     * Redoes the last undone drawing action.
+     */
+    function redoDraw() {
+      if (redoStack.length > 0) {
+        undoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state to undo stack
+        const nextState = redoStack.pop(); // Get next state from redo stack
+        drawingCtx.putImageData(nextState, 0, 0); // Restore next state
+        drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height); // Update drawingImage
+      }
+    }
+
+    /**
+     * Undoes the last bar manipulation action.
+     * Restores previous bar states and recreates labels.
+     */
+    function undoBar() {
+      if (barUndoStack.length > 0) {
+        barRedoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+        
+        const prevState = barUndoStack.pop();
+        bars = prevState.bars;
+        
+        // Remove all existing HTML labels
+        document.querySelectorAll('#canvas-container input.bar-label').forEach(el => el.remove());
+
+        // Recreate labels for the restored bars
+        bars.forEach(bar => {
+          if (bar.labels) {
+            for (let type in bar.labels) {
+              restoreLabel(bar, type, bar.labels[type]);
+            }
+          }
+        });
+        updateLabels();
+        drawAll();
+      }
+    }
+
+    /**
+     * Redoes the last undone bar manipulation action.
+     * Restores next bar states and recreates labels.
+     */
+    function redoBar() {
+      if (barRedoStack.length > 0) {
+        barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+        
+        const nextState = barRedoStack.pop();
+        bars = nextState.bars;
+        
+        // Remove all existing HTML labels
+        document.querySelectorAll('#canvas-container input.bar-label').forEach(el => el.remove());
+
+        // Recreate labels for the restored bars
+        bars.forEach(bar => {
+          if (bar.labels) {
+            for (let type in bar.labels) {
+              restoreLabel(bar, type, bar.labels[type]);
+            }
+          }
+        });
+        updateLabels();
+        drawAll();
+      }
+    }
+
+    /**
+     * Toggles the arrow display for the selected bar.
+     */
+    function toggleArrow() {
+      if (selectedBar) {
+        barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+        barRedoStack = [];
+        selectedBar.arrow = !selectedBar.arrow; // Toggle arrow property
+        drawAll(); // Redraw to show/hide arrow
+      }
+    }
+
+    /**
+     * Displays a menu to split the selected bar into multiple segments.
+     */
+    function splitBar() {
+      if (!selectedBar) return; // No bar selected
+
+      let menu = document.getElementById("split-menu");
+      if (!menu) {
+        // Create the split menu if it's not already in the DOM
+        menu = document.createElement("div");
+        menu.id = "split-menu";
+        menu.style.position = "absolute";
+        menu.style.display = "flex";
+        menu.style.flexDirection = "column";
+        menu.style.gap = "4px";
+        menu.style.background = "#fff";
+        menu.style.border = "1px solid #ccc";
+        menu.style.padding = "6px";
+        menu.style.borderRadius = "6px";
+        menu.style.zIndex = 99;
+        
+        // Add buttons for splitting from 1 to 12
+        for (let i = 1; i <= 12; i++) {
+          const b = document.createElement("button");
+          b.innerText = i;
+          b.onclick = () => {
+            barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+            barRedoStack = [];
+            selectedBar.split = i; // Set split count
+            menu.style.display = 'none'; // Hide menu after selection
+            drawAll(); // Redraw bar with splits
+          };
+          menu.appendChild(b);
+        }
+        document.body.appendChild(menu); // Append menu to body
+      } else {
+        // If menu already exists, just show it
+        menu.style.display = 'flex';
+      }
+
+      // Position the menu near the selected bar
+      const bx = selectedBar.xRatio * gridSize;
+      const by = selectedBar.yRatio * gridSize;
+      menu.style.left = `${bx + 10}px`;
+      menu.style.top = `${by - 10}px`;
+    }
+
+    /**
+     * Deletes the currently selected bar or textbox.
+     */
+    function deleteSelectedElement() {
+      // Save current state for undo before deletion
+      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+      barRedoStack = [];
+
+      if (selectedBar) {
+        // Remove associated HTML labels from the DOM
+        if (selectedBar.labels) {
+          for (let type in selectedBar.labels) {
+            selectedBar.labels[type].remove();
+          }
+        }
+
+        // Filter out the selected bar from the array
+        bars = bars.filter(b => b !== selectedBar);
+        selectedBar = null; // Deselect the bar
+        document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
+        drawAll(); // Redraw all remaining bars
+      } 
+    }
+
+    /**
+     * Updates the position of all HTML labels based on their associated bars' current positions.
+     */
+    function updateLabels() {
+      for (let bar of bars) {
+        if (!bar.labels) continue; // Skip if no labels
+        for (let type in bar.labels) {
+          const label = bar.labels[type];
+          const barX = bar.xRatio * gridSize;
+          const barY = bar.yRatio * gridSize;
+          const barWidth = bar.widthRatio * gridSize;
+          
+          if (type === 'text') {
+            label.style.left = `${barX - 70}px`; // Keep text label to the left
+            label.style.top = `${barY + 5}px`;
+          } else {
+            // Trigger input event to recalculate width and re-center for number labels
+            const event = new Event('input');
+            label.dispatchEvent(event);
+            label.style.top = `${barY - 45}px`; // Adjusted: 45px above the bar
+          }
+        }
+      }
+    }
+
+    /**
+     * Clears all bars, drawings, and resets the application state.
+     */
+    function clearAll() {
+      bars = []; // Clear bars array
+      selectedBar = null; // Deselect any bar
+      barRedoStack = []; // Clear bar redo stack
+      
+      // Clear drawing canvas and reset drawing image
+      drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
+      undoStack = []; // Clear drawing undo stack
+      redoStack = []; // Clear drawing redo stack
+      
+      // Remove all dynamically added HTML elements (labels, textboxes, split menu)
+      document.querySelectorAll('#canvas-container input.bar-label, #canvas-container textarea.text-box, #split-menu').forEach(el => {
+        // Exclude the problem generator input/output elements from being cleared
+        if (el.id !== 'problemKeywords' && el.id !== 'problemOutput' && el.id !== 'solutionOutput') { 
+          el.remove();
+        }
+      });
+      textboxes = []; // Clear textboxes array (should be empty now)
+      selectedTextBox = null; // Deselect any textbox (should be null now)
+      
+      document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
+      drawAll(); // Redraw (will be empty)
+
+      // Clear persistent problem display and solution bubble
+      persistentProblemDisplay.textContent = '';
+      persistentProblemDisplay.style.display = 'none';
+      closeSolutionBubble(); // Close and clear the solution bubble
+    }
+
+    /**
+     * Toggles the visibility of the "About" modal.
+     */
+    function toggleAbout() {
+      const modal = document.getElementById("aboutModal");
+      modal.style.display = modal.style.display === "none" ? "block" : "none";
+      // Close other modals if open
+      document.getElementById("problemGeneratorModal").style.display = "none";
+      document.getElementById("versionHistoryModal").style.display = "none";
+      closeSolutionBubble();
+    }
+
+    /**
+     * Toggles the visibility of the Version History modal.
+     */
+    function toggleVersionHistory() {
+      const modal = document.getElementById("versionHistoryModal");
+      modal.style.display = modal.style.display === "none" ? "block" : "none";
+      // Close other modals if open
+      document.getElementById("aboutModal").style.display = "none";
+      document.getElementById("problemGeneratorModal").style.display = "none";
+      closeSolutionBubble();
+    }
+
+    /**
+     * Toggles the visibility of the Problem Generator modal.
+     */
+    function toggleProblemGenerator() {
+      const modal = document.getElementById("problemGeneratorModal");
+      modal.style.display = modal.style.display === "none" ? "block" : "none";
+      // Clear problem and solution output when opening the modal
+      document.getElementById('problemOutput').textContent = 'Your generated problem will appear here.';
+      document.getElementById('loadingIndicator').style.display = 'none';
+      // Close other modals if open
+      document.getElementById("aboutModal").style.display = "none";
+      document.getElementById("versionHistoryModal").style.display = "none";
+      closeSolutionBubble();
+    }
+
+    /**
+     * Displays the current step of the solution in the solution bubble.
+     * Manages "Previous" and "Next" button states.
+     */
+    function displayCurrentStep() {
+        const solutionContent = document.getElementById('solutionContent');
+        const prevBtn = document.getElementById('prevStepBtn');
+        const nextBtn = document.getElementById('nextStepBtn');
+
+        if (solutionSteps.length > 0) {
+            solutionContent.innerHTML = solutionSteps[currentStepIndex];
+            renderMathInGivenElement(solutionContent); // Render LaTeX in solution step
+            prevBtn.disabled = (currentStepIndex === 0);
+            nextBtn.disabled = (currentStepIndex === solutionSteps.length - 1);
+        } else {
+            solutionContent.textContent = "No solution steps available.";
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+        }
+    }
+
+    /**
+     * Moves to the next step in the solution carousel.
+     */
+    function showNextStep() {
+        if (currentStepIndex < solutionSteps.length - 1) {
+            currentStepIndex++;
+            displayCurrentStep();
+        }
+    }
+
+    /**
+     * Moves to the previous step in the solution carousel.
+     */
+    function showPreviousStep() {
+        if (currentStepIndex > 0) {
+            currentStepIndex--;
+            displayCurrentStep();
+        }
+    }
+
+    /**
+     * Closes and clears the solution tips bubble.
+     */
+    function closeSolutionBubble() {
+        document.getElementById('solutionBubble').style.display = 'none';
+        solutionSteps = []; // Clear steps when closed
+        currentStepIndex = 0;
+        document.getElementById('solutionContent').textContent = ''; // Clear content
+    }
+
+    /**
+     * Generates a word problem using the Gemini API based on user keywords.
+     */
+    async function generateProblem() {
+      const keywordsInput = document.getElementById('problemKeywords');
+      const numberTypes = Array.from(document.querySelectorAll('input[name="numberType"]:checked')).map(cb => cb.value);
+      const minNumberRange = document.getElementById('minNumberRange').value;
+      const maxNumberRange = document.getElementById('maxNumberRange').value;
+      const operations = Array.from(document.querySelectorAll('input[name="operation"]:checked')).map(cb => cb.value);
+      const problemTheme = document.querySelector('input[name="problemTheme"]:checked').value;
+      const problemLanguage = document.querySelector('input[name="problemLanguage"]:checked').value;
+
+      const problemOutput = document.getElementById('problemOutput');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const keywords = keywordsInput.value.trim();
+
+      // Clear previous problem and solution bubble
+      problemOutput.textContent = '';
+      persistentProblemDisplay.textContent = '';
+      persistentProblemDisplay.style.display = 'none';
+      closeSolutionBubble(); // Ensure solution bubble is closed
+
+      loadingIndicator.style.display = 'block'; // Show loading indicator
+
+      // Store the selected language for later use in solveProblem
+      lastProblemLanguage = problemLanguage;
+
+      try {
+        let chatHistory = [];
+        let prompt = `Generate a single, coherent, and solvable math word problem suitable for elementary school students in Malaysia. The problem should clearly state the given information and what needs to be found.`;
+
+        if (numberTypes.length > 0) {
+            prompt += ` It must use numbers of type: ${numberTypes.join(', ')}.`;
+            if (numberTypes.includes('fractions')) {
+                prompt += ` If fractions are included, represent them in LaTeX math format (e.g., $\\frac{1}{2}$).`;
+            }
+        }
+        
+        prompt += ` The numbers should be between ${minNumberRange} and ${maxNumberRange}.`;
+
+        if (operations.length > 0) {
+            prompt += ` It should involve the following operations: ${operations.join(', ')}.`;
+        }
+        
+        if (problemTheme !== 'any') {
+            prompt += ` The theme should be related to ${problemTheme}.`;
+        }
+        
+        if (keywords) {
+            prompt += ` Incorporate the following concepts or keywords: "${keywords}".`;
+        }
+        
+        // Add Malaysian context specifics
+        prompt += ` If money is involved, use 'RM' for Malaysian Ringgit. Ensure the problem is culturally relevant to Malaysia.`;
+
+        prompt += ` Do not include any introductory phrases like "Here is a simple math word problem." Respond in ${problemLanguage}.`;
+
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        const payload = { contents: chatHistory };
+        // NOTE: Replace with your actual API Key. Leaving it blank may limit model usage.
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+          const text = result.candidates[0].content.parts[0].text;
+          problemOutput.innerHTML = text; // Use innerHTML to allow KaTeX to render
+          persistentProblemDisplay.innerHTML = text; // Use innerHTML to allow KaTeX to render
+          persistentProblemDisplay.style.display = 'block'; // Show persistent display
+          renderMathInGivenElement(problemOutput); // Render LaTeX in modal output
+          renderMathInGivenElement(persistentProblemDisplay); // Render LaTeX in persistent display
+          toggleProblemGenerator(); // Close the modal after generation
+        } else {
+          problemOutput.textContent = "Failed to generate problem. Please try again.";
+          persistentProblemDisplay.textContent = ''; // Clear persistent display on error
+          persistentProblemDisplay.style.display = 'none';
+          console.error("Gemini API response structure unexpected:", result);
+        }
+      } catch (error) {
+        problemOutput.textContent = "Error generating problem. Please check your network connection or try again later.";
+        persistentProblemDisplay.textContent = ''; // Clear persistent display on error
+        persistentProblemDisplay.style.display = 'none';
+        console.error("Error calling Gemini API:", error);
+      } finally {
+        loadingIndicator.style.display = 'none'; // Hide loading indicator
+      }
+    }
+
+    /**
+     * Solves the currently displayed problem using the Gemini API.
+     */
+    async function solveProblem() {
+      // Get the problem from the persistent display
+      const problemText = persistentProblemDisplay.textContent;
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const solutionBubble = document.getElementById('solutionBubble');
+
+      // Clear previous solution steps and hide the bubble initially
+      solutionSteps = [];
+      currentStepIndex = 0;
+      solutionBubble.style.display = 'none';
+      document.getElementById('solutionContent').textContent = ''; // Clear content
+
+      if (!problemText || problemText.trim() === '' || problemText === 'Your generated problem will appear here.') {
+        document.getElementById('solutionContent').textContent = "Please generate a problem first before trying to solve it.";
+        solutionBubble.style.display = 'flex'; // Show bubble with error
+        document.getElementById('prevStepBtn').style.display = 'none'; // Hide buttons
+        document.getElementById('nextStepBtn').style.display = 'none';
+        return;
+      }
+
+      loadingIndicator.style.display = 'block'; // Show loading indicator
+
+      try {
+        let chatHistory = [];
+        // Request numbered steps from the AI with bold subtitles, emphasizing brevity
+        const prompt = `Provide a clear, simple, and very concise step-by-step solution or helpful tips to solve the following math word problem. Each step should be a numbered item. If a step requires a sub-explanation, use bold text for a short subtitle within that step. Keep each step's explanation to one or two sentences, easy for elementary school students to understand, and avoid overly complex language. If mathematical expressions are part of the solution, use LaTeX math format (e.g., $\\frac{1}{2}$, $5 \\times 3$). Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        const payload = { contents: chatHistory };
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+          const fullSolutionText = result.candidates[0].content.parts[0].text;
+          // Parse the solution into steps based on numbered list
+          // Split by "N. " where N is a digit, ensuring it's at the start of a line or after a newline
+          solutionSteps = fullSolutionText.split(/\n\d+\.\s|\d+\.\s/).filter(step => step.trim() !== '').map(step => step.trim());
+          
+          if (solutionSteps.length === 0 && fullSolutionText.trim() !== '') {
+              // Fallback if parsing fails but there's content, treat as one step
+              solutionSteps = [fullSolutionText];
+          } else if (solutionSteps.length === 0 && fullSolutionText.trim() === '') {
+              solutionSteps = ["No solution steps could be generated."];
+          }
+
+          currentStepIndex = 0;
+          displayCurrentStep();
+          solutionBubble.style.display = 'flex'; // Show the bubble
+          // Show/hide navigation buttons based on number of steps
+          document.getElementById('prevStepBtn').style.display = solutionSteps.length > 1 ? 'inline-block' : 'none';
+          document.getElementById('nextStepBtn').style.display = solutionSteps.length > 1 ? 'inline-block' : 'none';
+
+        } else {
+          document.getElementById('solutionContent').textContent = "Failed to get solution. Please try again.";
+          solutionBubble.style.display = 'flex';
+          document.getElementById('prevStepBtn').style.display = 'none';
+          document.getElementById('nextStepBtn').style.display = 'none';
+          console.error("Gemini API response structure unexpected:", result);
+        }
+      } catch (error) {
+        document.getElementById('solutionContent').textContent = "Error getting solution. Please check your network connection or try again later.";
+        solutionBubble.style.display = 'flex';
+        document.getElementById('prevStepBtn').style.display = 'none';
+        document.getElementById('nextStepBtn').style.display = 'none';
+        console.error("Error calling Gemini API for solution:", error);
+      } finally {
+        loadingIndicator.style.display = 'none'; // Hide loading indicator
+      }
+    }
+
+    /**
+     * Exports the canvas content as a PNG image.
+     */
+    function exportCanvas() {
+      // Create a temporary canvas to merge all layers
+      const exportCanvasEl = document.createElement('canvas');
+      exportCanvasEl.width = canvas.width;
+      exportCanvasEl.height = canvas.height;
+      const exportCtx = exportCanvasEl.getContext('2d');
+
+      // Draw background grid
+      exportCtx.drawImage(bgCanvas, 0, 0);
+      // Draw bars
+      exportCtx.drawImage(canvas, 0, 0);
+      // Draw freehand drawing
+      exportCtx.drawImage(drawingCanvas, 0, 0);
+
+      // Collect all HTML elements to be drawn
+      const htmlElementsToDraw = Array.from(document.querySelectorAll('#canvas-container input.bar-label')); // Removed textbox selector
+      let elementsDrawnCount = 0;
+
+      // Function to check if all elements are drawn and then trigger download
+      const checkAndDownload = () => {
+        elementsDrawnCount++;
+        if (elementsDrawnCount === htmlElementsToDraw.length || htmlElementsToDraw.length === 0) {
+          const dataURL = exportCanvasEl.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = dataURL;
+          a.download = 'bar_model.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          exportCanvasEl.remove(); // Clean up temporary canvas
+        }
+      };
+
+      if (htmlElementsToDraw.length === 0) {
+        checkAndDownload(); // No HTML elements, just download the canvas content
+      } else {
+        htmlElementsToDraw.forEach(el => {
+          // Create a temporary SVG element to render HTML element content
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${el.offsetWidth}" height="${el.offsetHeight}">
+                         <foreignObject width="100%" height="100%">
+                           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Inter', sans-serif; font-size: ${el.style.fontSize}; color: ${el.style.color}; text-align: ${el.style.textAlign}; padding: ${el.style.padding}; border: ${el.style.border}; background: ${el.style.background}; box-shadow: ${el.style.boxShadow}; border-radius: ${el.style.borderRadius};">
+                             ${el.tagName === 'INPUT' ? el.value : el.innerHTML.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                           </div>
+                         </foreignObject>
+                       </svg>`;
+          const img = new Image();
+          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+          img.onload = () => {
+            exportCtx.drawImage(img, parseFloat(el.style.left), parseFloat(el.style.top));
+            checkAndDownload();
+          };
+          img.onerror = (err) => {
+            console.error("Error loading SVG for export:", err);
+            alert("Error exporting image. Please ensure all elements are loaded correctly.");
+            exportCanvasEl.remove();
+          };
+        });
+      }
+    }
+
+
+    // --- Touch Event Handlers for Drawing Canvas ---
+    drawingCanvas.addEventListener('touchstart', handleTouchStart);
+    drawingCanvas.addEventListener('touchmove', handleTouchMove);
+    drawingCanvas.addEventListener('touchend', handleTouchEnd);
+
+    function handleTouchStart(e) {
+      if (!penMode) return; // Only draw if pen mode is active
+      const touch = e.touches[0];
+      const rect = drawingCanvas.getBoundingClientRect();
+      const mx = touch.clientX - rect.left;
+      const my = touch.clientY - rect.top;
+      
+      undoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state for undo
+      redoStack = []; // Clear redo stack
+      
+      drawingCtx.beginPath();
+      drawingCtx.strokeStyle = penColor;
+      drawingCtx.lineWidth = penSize;
+      drawingCtx.lineCap = 'round'; // Added for smoother lines
+      drawingCtx.lineJoin = 'round'; // Added for smoother lines
+      drawingCtx.moveTo(mx, my);
+      isTouchDrawing = true;
+      e.preventDefault(); // Prevent scrolling/zooming
+    }
+
+    function handleTouchMove(e) {
+      if (!isTouchDrawing || !penMode) return;
+      const touch = e.touches[0];
+      const rect = drawingCanvas.getBoundingClientRect();
+      const mx = touch.clientX - rect.left;
+      const my = touch.clientY - rect.top;
+      drawingCtx.lineTo(mx, my);
+      drawingCtx.stroke();
+      e.preventDefault(); // Prevent scrolling/zooming
+    }
+
+    function handleTouchEnd() {
+      if (isTouchDrawing && penMode) {
+        isTouchDrawing = false;
+        drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height); // Update drawingImage
+      }
+    }
+
+    // --- Mouse Event Handlers for Main Canvas (Bar Interaction) ---
+    canvas.addEventListener('mousedown', e => {
+      if (currentMode !== 'select') return;
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left;
+      const my = e.clientY - r.top;
+
+      // Check for resize handle interaction
+      for (let bar of bars.slice().reverse()) { // Iterate in reverse to select top-most bar
+        const bx = bar.xRatio * gridSize;
+        const by = bar.yRatio * gridSize;
+        const bw = bar.widthRatio * gridSize;
+        const bh = bar.heightRatio * gridSize;
+
+        if (mx >= bx + bw - 10 && mx <= bx + bw + 10 && my >= by + bh / 2 - 10 && my <= by + bh / 2 + 10) {
+          selectedBar = bar;
+          isResizing = true;
+          document.getElementById("bar-tools").style.display = "flex";
+          barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+          barRedoStack = [];
+          return;
+        }
+      }
+
+      // Check for bar dragging interaction
+      for (let bar of bars.slice().reverse()) {
+        const bx = bar.xRatio * gridSize;
+        const by = bar.yRatio * gridSize;
+        const bw = bar.widthRatio * gridSize;
+        const bh = bar.heightRatio * gridSize;
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          selectedBar = bar;
+          dragOffsetX = mx - bx;
+          dragOffsetY = my - by;
+          isDragging = true;
+          document.getElementById("bar-tools").style.display = "flex";
+          barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+          barRedoStack = [];
+          return;
+        }
+      }
+      // If no bar or handle is selected, deselect any previously selected bar
+      selectedBar = null;
+      document.getElementById("bar-tools").style.display = "none";
+      drawAll();
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      if (!selectedBar || (!isResizing && !isDragging) || currentMode !== 'select') return;
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left;
+      const my = e.clientY - r.top;
+      
+      const snapUnit = gridSize / 10; // Finer snapping for movement/resize
+
+      if (isResizing) {
+        selectedBar.widthRatio = Math.max(1, Math.round((mx - selectedBar.xRatio * gridSize) / snapUnit) * snapUnit / gridSize);
+        updateLabels();
+        drawAll();
+        return;
+      }
+
+      if (isDragging) {
+        selectedBar.xRatio = Math.round((mx - dragOffsetX) / snapUnit) * snapUnit / gridSize;
+        selectedBar.yRatio = Math.round((my - dragOffsetY) / gridSize);
+        updateLabels();
+        drawAll();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isDragging = false;
+      isResizing = false;
+    });
+
+    // --- Mouse Event Handlers for Drawing Canvas ---
+    drawingCanvas.addEventListener('mousedown', e => {
+      if (currentMode !== 'draw') return;
+      undoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state for undo
+      redoStack = []; // Clear redo stack
+      isDrawing = true;
+      const r = drawingCanvas.getBoundingClientRect();
+      drawingCtx.beginPath();
+      drawingCtx.strokeStyle = penColor;
+      drawingCtx.lineWidth = penSize;
+      drawingCtx.lineCap = 'round'; // Added for smoother lines
+      drawingCtx.lineJoin = 'round'; // Added for smoother lines
+      drawingCtx.moveTo(e.clientX - r.left, e.clientY - r.top);
+    });
+
+    drawingCanvas.addEventListener('mousemove', e => {
+      if (!isDrawing) return;
+      const r = drawingCanvas.getBoundingClientRect();
+      drawingCtx.lineTo(e.clientX - r.left, e.clientY - r.top);
+      drawingCtx.stroke();
+    });
+
+    drawingCanvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+      drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height); // Update drawingImage
+    });
+
+    // --- Keyboard Event Handler ---
+    document.addEventListener('keydown', (e) => {
+      // Check if focus is on an input or textarea element
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return; // Do not trigger shortcuts if typing
+      }
+
+      const key = e.code;
+      const ctrlKey = e.ctrlKey || e.metaKey; // Compatible with Mac's Command key
+      const shiftKey = e.shiftKey;
+
+      for (const shortcutKey in KEYBOARD_SHORTCUTS) {
+        const shortcut = KEYBOARD_SHORTCUTS[shortcutKey];
+        // Check if the pressed key and modifier keys match the shortcut
+        if (key === shortcutKey && 
+            (shortcut.ctrlKey === undefined || shortcut.ctrlKey === ctrlKey) && 
+            (shortcut.shiftKey === undefined || shortcut.shiftKey === shiftKey)) {
+          
+          e.preventDefault(); // Prevent default browser actions (e.g., Ctrl+S saves the page)
+          
+          if (shortcut.func) {
+            // Call the function with its arguments, if any
+            shortcut.func(...(shortcut.args || []));
+          }
+          break; // Stop after the first matching shortcut is found
+        }
+      }
+    });
+  </script>
+</body>
+</html>
