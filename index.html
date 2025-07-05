@@ -36,10 +36,10 @@
       flex: 1; /* Takes up remaining vertical space */
       position: relative;
       overflow: hidden;
-      aspect-ratio: 16/9; /* Maintain aspect ratio for the drawing area */
       width: 100vw;
-      height: auto;
-      max-height: calc(100vh - 80px); /* Adjust based on toolbar height */
+      /* Fixed height calculation to prevent layout shifts */
+      height: calc(100vh - 80px); /* Adjust based on toolbar height */
+      max-height: calc(100vh - 80px); /* Ensure it doesn't exceed this */
       margin: 0 auto;
       background-color: white;
     }
@@ -79,7 +79,8 @@
       gap: 30px;
       flex-wrap: nowrap; /* Prevent wrapping for horizontal scroll */
       overflow-x: auto; /* Enable horizontal scrolling for small screens */
-      max-height: 10vh; /* Limit toolbar height */
+      height: 80px; /* Fixed height for toolbar to prevent shifts */
+      flex-shrink: 0; /* Prevent toolbar from shrinking */
       -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
       scrollbar-width: none; /* Hide scrollbar for Firefox */
     }
@@ -470,8 +471,11 @@
         overflow-y: auto;
         max-height: 200px; /* Limit height and allow scrolling */
         font-size: 0.95em;
-        line-height: 1.4;
+        line-height: 1.8; /* Increased line height for better spacing */
         color: #333;
+    }
+    #solutionContent p { /* Add margin to paragraphs within solution content */
+        margin-bottom: 10px;
     }
     #solutionBubble button {
         padding: 8px 12px;
@@ -518,6 +522,10 @@
         color: #343a40;
         overflow-y: auto; /* Enable scrolling for content */
         max-height: 150px; /* Limit height */
+        line-height: 1.8; /* Increased line height for better spacing */
+    }
+    #barModelIdeaModal #barModelIdeaContent p { /* Add margin to paragraphs within idea content */
+        margin-bottom: 10px;
     }
 
     @media (max-width: 768px) {
@@ -537,7 +545,7 @@
   <!-- Top Left Buttons -->
   <div class="top-left-buttons" style="position: absolute; top: 12px; left: 12px; z-index: 99; display: flex; gap: 8px;">
     <!-- About Button -->
-    <button onclick="toggleAbout()" title="About"
+    <button onclick="window.toggleAbout()" title="About"
       style="padding: 8px 12px; font-size: 14px; /* Adjusted padding */
              background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;
              box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
@@ -545,7 +553,7 @@
     </button>
 
     <!-- Version Functions Button -->
-    <button onclick="toggleVersionHistory()" title="View Version Features"
+    <button onclick="window.toggleVersionHistory()" title="View Version Features"
       style="padding: 8px 12px; font-size: 14px;
              background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;
              box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
@@ -553,21 +561,21 @@
     </button>
 
     <!-- ✨ Generate Problem Button (Q°) -->
-    <button onclick="toggleProblemGenerator()" class="tool-button q-button" title="Generate a Word Problem with AI"
+    <button onclick="window.toggleProblemGenerator()" class="tool-button q-button" title="Generate a Word Problem with AI"
             style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
       Q°
     </button>
 
     <!-- 💡 AI Solve Button (A°) -->
-    <button onclick="solveProblem()" class="tool-button solve" title="Get AI Solution/Tips for the current problem"
+    <button onclick="window.solveProblem()" class="tool-button solve" title="Get AI Solution/Tips for the current problem"
             style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
       A°
     </button>
 
     <!-- ✨ Bar Model Idea Button (M°) -->
-    <button onclick="generateBarModelIdea()" class="tool-button m-button" title="Get AI Bar Model Idea"
+    <button onclick="window.generateBarModelIdea()" class="tool-button m-button" title="Get AI Bar Model Idea"
             style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
       M°
@@ -586,7 +594,7 @@
   <!-- Top Right Buttons -->
   <div class="top-right-buttons" style="position: absolute; top: 12px; right: 12px; z-index: 99; display: flex; gap: 8px;">
     <!-- Export as Image Button -->
-    <button onclick="exportCanvas()" title="Export as Image (Screenshot)"
+    <button onclick="window.exportCanvas()" title="Export as Image (Screenshot)"
       style="padding: 8px 12px; font-size: 14px;
              background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;
              box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
@@ -594,7 +602,7 @@
     </button>
 
     <!-- Clear All Button -->
-    <button onclick="clearAll()" title="Clear All" 
+    <button onclick="window.clearAll()" title="Clear All" 
       style="padding: 8px 12px; font-size: 14px;
              background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;
              box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s ease, transform 0.1s ease;">
@@ -616,20 +624,20 @@
       <button class="tool-button" title="Grid Size">
         <img src="https://img.icons8.com/ios-filled/30/grid.png" alt="Grid Icon"/>
       </button>
-      <input id="gridSlider" type="range" min="40" max="120" value="80" oninput="gridSize=parseInt(this.value); resizeCanvas();">
+      <input id="gridSlider" type="range" min="40" max="120" value="80" oninput="window.resizeCanvas();">
     </div>
 
     <!-- Drawing Tools -->
     <div style="display:flex;align-items:center;gap:8px;">
       <img src="https://img.icons8.com/ios-glyphs/30/pencil-tip.png" title="Pen Size" style="width: 28px; height: 28px;" alt="Pen Icon">
       <input type="range" min="1" max="10" value="5" oninput="penSize=this.value">
-      <button onclick="toggleDrawMode(this, 'black')" class="tool-button color-button" style="background:black" title="Black Pen"></button>
-      <button onclick="toggleDrawMode(this, 'red')" class="tool-button color-button" style="background:red" title="Red Pen"></button>
-      <button onclick="toggleDrawMode(this, 'blue')" class="tool-button color-button" style="background:blue" title="Blue Pen"></button>
-      <button onclick="undoDraw()" class="tool-button" title="Undo Drawing">
+      <button onclick="window.toggleDrawMode(this, 'black')" class="tool-button color-button" style="background:black" title="Black Pen"></button>
+      <button onclick="window.toggleDrawMode(this, 'red')" class="tool-button color-button" style="background:red" title="Red Pen"></button>
+      <button onclick="window.toggleDrawMode(this, 'blue')" class="tool-button color-button" style="background:blue" title="Blue Pen"></button>
+      <button onclick="window.undoDraw()" class="tool-button" title="Undo Drawing">
         <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
       </button>
-      <button onclick="redoDraw()" class="tool-button" title="Redo Drawing">
+      <button onclick="window.redoDraw()" class="tool-button" title="Redo Drawing">
         <img src="https://img.icons8.com/ios-glyphs/30/redo.png" alt="Redo Icon"/>
       </button>
     </div>
@@ -637,36 +645,36 @@
     <!-- Bar Manipulation Tools -->
     <div style="display:flex;align-items:center;gap:6px;">
       <span id="bar-tools" style="display:flex;gap:6px;">
-        <button onclick="addLabel('text')" class="tool-button" title="Label Text">
+        <button onclick="window.addLabel('text')" class="tool-button" title="Label Text">
           <span style="font-size: 20px;">ABC</span>
         </button>
-        <button onclick="addLabel('num')" class="tool-button" title="Label Number">
+        <button onclick="window.addLabel('num')" class="tool-button" title="Label Number">
           <span style="font-size: 20px;">123</span>
         </button>
-        <button onclick="toggleArrow()" class="tool-button" title="Toggle Arrow">
+        <button onclick="window.toggleArrow()" class="tool-button" title="Toggle Arrow">
           <img src="https://img.icons8.com/ios-glyphs/30/resize-diagonal.png" alt="Arrow Icon"/>
         </button>
-        <button onclick="deleteSelectedBar()" class="tool-button" title="Delete Bar">
+        <button onclick="window.deleteSelectedBar()" class="tool-button" title="Delete Bar">
           <img src="https://img.icons8.com/ios-glyphs/30/trash--v1.png" alt="Delete Icon"/>
         </button>
-        <button onclick="splitBar()" class="tool-button" title="Split Bar">
+        <button onclick="window.splitBar()" class="tool-button" title="Split Bar">
           <img src="https://img.icons8.com/ios-glyphs/30/divide.png" alt="Split Icon"/>
         </button>
       </span>
       
       <!-- Bar Color/Type Selection -->
-      <button onclick="addBar('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
-      <button onclick="addBar('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
-      <button onclick="addBar('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
-      <button onclick="addBar('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
-      <button onclick="addBar('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
-      <button onclick="addBar('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
+      <button onclick="window.addBar('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
+      <button onclick="window.addBar('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
+      <button onclick="window.addBar('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
+      <button onclick="window.addBar('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
+      <button onclick="window.addBar('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
+      <button onclick="window.addBar('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
 
       <!-- Bar Undo/Redo -->
-      <button onclick="undoBar()" class="tool-button" title="Undo Bar Action">
+      <button onclick="window.undoBar()" class="tool-button" title="Undo Bar Action">
         <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
       </button>
-      <button onclick="redoBar()" class="tool-button" title="Redo Bar Action">
+      <button onclick="window.redoBar()" class="tool-button" title="Redo Bar Action">
         <img src="https://img.icons8.com/ios-glyphs/30/redo.png" alt="Redo Icon"/>
       </button>
     </div>
@@ -688,7 +696,7 @@
     with the assistance of <strong>ChatGPT</strong> and **Gemini** by Google.</p>
     
     <div style="text-align:right; margin-top:16px;">
-      <button onclick="toggleAbout()" style="padding: 6px 12px; background: #dc3545; color: white;
+      <button onclick="window.toggleAbout()" style="padding: 6px 12px; background: #dc3545; color: white;
                    border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease;">Close</button>
     </div>
   </div>
@@ -697,31 +705,31 @@
   <div id="versionHistoryModal">
     <h2 style="margin-top:0;">🚀 Version Features</h2>
     
-    <h3>核心功能 (Core Features)</h3>
+    <h3>Core Features</h3>
     <ul>
-      <li><strong>条形模型创建与定制:</strong> 创建和操作实心或虚线条形模型，虚线用于表示未知或移除的数量。</li>
-      <li><strong>条形模型操作:</strong> 轻松调整条形模型的大小和位置；将现有条形模型分割成多个等段；直接在条形模型上添加可拖动的文本和数字标签，以进行清晰的注释；为条形模型添加方向箭头以指示数量或关系。</li>
-      <li><strong>可调节网格:</strong> 自定义背景网格大小，以实现精确对齐。</li>
-      <li><strong>自由手绘:</strong> 使用多种颜色的画笔工具进行注释，包括撤销/重做功能。</li>
+      <li><strong>Bar Model Creation & Customization:</strong> Create and manipulate solid or dashed bar models, with dashed lines representing unknown or removed quantities.</li>
+      <li><strong>Bar Model Manipulation:</strong> Easily resize and reposition bar models; split existing bar models into multiple equal segments; add draggable text and numerical labels directly on bar models for clear annotation; add directional arrows to bar models to indicate quantities or relationships.</li>
+      <li><strong>Adjustable Grid:</strong> Customize the background grid size for precise alignment.</li>
+      <li><strong>Freehand Drawing:</strong> Use a multi-color pen tool for annotations, including undo/redo functionality.</li>
     </ul>
 
-    <h3>增强功能 (Enhancements)</h3>
+    <h3>Enhancements</h3>
     <ul>
-      <li><strong>导出画布:</strong> 将您的条形模型保存为图像 (PNG)。</li>
-      <li><strong>持久化问题显示:</strong> 生成的问题会一直显示在标题下方，以便于参考。</li>
-      <li><strong>增强响应性:</strong> 改进了在各种屏幕尺寸（手机、平板电脑、桌面）上的布局和可用性。</li>
-      <li><strong>键盘快捷键:</strong> 快速访问常用操作，如撤销/重做、删除、切换箭头、添加条形和清除所有。</li>
+      <li><strong>Export Canvas:</strong> Save your bar model as an image (PNG).</li>
+      <li><strong>Persistent Problem Display:</strong> Generated problems remain visible below the title for easy reference.</li>
+      <li><strong>Enhanced Responsiveness:</strong> Improved layout and usability across various screen sizes (mobile, tablet, desktop).</li>
+      <li><strong>Keyboard Shortcuts:</strong> Quick access to common operations like undo/redo, delete, toggle arrow, add bar, and clear all.</li>
     </ul>
 
-    <h3>AI 驱动功能 (AI-Powered Features)</h3>
+    <h3>AI-Powered Features</h3>
     <ul>
-      <li><strong>AI 驱动问题生成器 (Q°):</strong> 根据指定的数字类型（整数、分数、小数、百分比）、范围、运算、主题和关键词生成独特的应用题。分数使用 LaTeX 渲染。</li>
-      <li><strong>AI 驱动解决方案提供器 (A°):</strong> 为生成的问题提供简洁、分步的解决方案或提示，以易于理解的轮播格式呈现，带有粗体副标题和 LaTeX 数学渲染。</li>
-      <li><strong>AI 驱动条形模型构思 (M°):</strong> 根据当前问题生成关于如何使用条形模型表示该问题的文本描述。</li>
+      <li><strong>AI-Powered Problem Generator (Q°):</strong> Generate unique word problems based on specified number types (whole numbers, fractions, decimals, percentages), ranges, operations, themes, and keywords. Fractions are rendered using LaTeX.</li>
+      <li><strong>AI-Powered Solution Provider (A°):</strong> Provides concise, step-by-step solutions or tips for the current problem in an easy-to-understand carousel format, with bold subtitles and LaTeX math rendering.</li>
+      <li><strong>AI-Powered Bar Model Idea (M°):</strong> Generates a text description of how to represent the current problem using bar models.</li>
     </ul>
 
     <div style="text-align:right; margin-top:16px;">
-      <button onclick="toggleVersionHistory()" style="padding: 6px 12px; background: #6c757d; color: white;
+      <button onclick="window.toggleVersionHistory()" style="padding: 6px 12px; background: #6c757d; color: white;
                    border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s ease;">Close</button>
     </div>
   </div>
@@ -760,6 +768,14 @@
     </div>
 
     <div class="form-group">
+        <label>Bar Model Type:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="barModelType" value="comparison"> Comparison</label>
+            <label><input type="checkbox" name="barModelType" value="equal parts"> Equal Parts</label>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label>Theme:</label>
         <div class="radio-group">
             <label><input type="radio" name="problemTheme" value="any" checked> Any</label>
@@ -784,8 +800,8 @@
     </div>
 
     <div style="text-align:right;">
-      <button class="generate" onclick="generateProblem()">✨ Generate</button>
-      <button class="close" onclick="toggleProblemGenerator()">Close</button>
+      <button class="generate" onclick="window.generateProblem()">✨ Generate</button>
+      <button class="close" onclick="window.toggleProblemGenerator()">Close</button>
     </div>
     <div id="loadingIndicator" class="loading-indicator">Generating problem</div>
     <div id="problemOutput">Your generated problem will appear here.</div>
@@ -797,10 +813,10 @@
       <h3>Solution Tips</h3>
       <div id="solutionContent"></div>
       <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-          <button id="prevStepBtn" onclick="showPreviousStep()">Previous</button>
-          <button id="nextStepBtn" onclick="showNextStep()">Next</button>
+          <button id="prevStepBtn" onclick="window.showPreviousStep()">Previous</button>
+          <button id="nextStepBtn" onclick="window.showNextStep()">Next</button>
       </div>
-      <button class="close-button" onclick="closeSolutionBubble()">&times;</button>
+      <button class="close-button" onclick="window.closeSolutionBubble()">&times;</button>
   </div>
 
   <!-- Bar Model Idea Modal (hidden by default) -->
@@ -809,7 +825,7 @@
     <div id="barModelIdeaContent"></div>
     <div id="barModelIdeaLoading" class="loading-indicator">Generating idea</div>
     <div style="text-align:right; margin-top:16px;">
-      <button onclick="closeBarModelIdeaModal()" class="close-button"
+      <button onclick="window.closeBarModelIdeaModal()" class="close-button"
               style="background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; padding: 6px 12px;">Close</button>
     </div>
   </div>
@@ -869,14 +885,14 @@
 
     // Keyboard shortcuts mapping (simplified)
     const KEYBOARD_SHORTCUTS = {
-      'KeyZ': { ctrlKey: true, func: undoBar, description: 'Undo Bar Action (Ctrl+Z)' },
-      'KeyY': { ctrlKey: true, func: redoBar, description: 'Redo Bar Action (Ctrl+Y)' },
-      'Delete': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
-      'Backspace': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
-      'KeyA': { func: toggleArrow, description: 'Toggle Arrow' },
-      'KeyD': { func: toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
-      'KeyB': { func: addBar, args: ['#b3e5fc'], description: 'Add Blue Bar' },
-      'KeyC': { func: clearAll, description: 'Clear All' },
+      'KeyZ': { ctrlKey: true, func: window.undoBar, description: 'Undo Bar Action (Ctrl+Z)' },
+      'KeyY': { ctrlKey: true, func: window.redoBar, description: 'Redo Bar Action (Ctrl+Y)' },
+      'Delete': { func: window.deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
+      'Backspace': { func: window.deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
+      'KeyA': { func: window.toggleArrow, description: 'Toggle Arrow' },
+      'KeyD': { func: window.toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
+      'KeyB': { func: window.addBar, args: ['#b3e5fc'], description: 'Add Blue Bar' },
+      'KeyC': { func: window.clearAll, description: 'Clear All' },
     };
 
     /**
@@ -900,7 +916,7 @@
      * Resizes all canvases to fit the window and redraws content.
      * Captures current drawing before resizing to preserve it.
      */
-    function resizeCanvas() {
+    window.resizeCanvas = function() {
       // Save current drawing before resizing
       if (drawingCanvas.width > 0 && drawingCanvas.height > 0) {
         drawingImage = drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
@@ -1015,9 +1031,9 @@
           ctx.lineTo(bx + 8, y + 5);  // Adjusted from 10 to 8
           ctx.fill();
           ctx.beginPath();  
-          ctx.moveTo(bx + bw - 8, y - 5);  // Adjusted from 10 to 8
+          ctx.moveTo(bx + bw - 8, y - 5);  
           ctx.lineTo(bx + bw, y);  
-          ctx.lineTo(bx + bw - 8, y + 5);  // Adjusted from 10 to 8
+          ctx.lineTo(bx + bw - 8, y + 5);  
           ctx.fill();
           ctx.lineWidth = 1.5; // Reset line width
         }
@@ -1045,8 +1061,12 @@
      * If a label of the same type already exists, it removes it.
      * @param {string} type - 'text' for a text label, 'num' for a number label.
      */
-    function addLabel(type) {
+    window.addLabel = function(type) {
       if (!selectedBar) return; // No bar selected, do nothing
+
+      // Save current state for undo
+      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+      barRedoStack = []; // Clear redo stack on new action
 
       // Initialize labels object if it doesn't exist
       if (!selectedBar.labels) selectedBar.labels = {};
@@ -1138,7 +1158,7 @@
           this.style.left = `${currentBarX + currentBarWidth / 2 - this.offsetWidth / 2}px`;
         }
       });
-
+      
       // Make all labels draggable
       let isLabelDragging = false;
       let labelOffsetX, labelOffsetY; // Offset from mouse click to label's top-left corner
@@ -1184,17 +1204,20 @@
       const event = new Event('input');
       label.dispatchEvent(event);
       
+      // Remove the temporary measureSpan after use to prevent whitespace
+      document.body.removeChild(measureSpan);
+      
       // label.focus(); // Auto-focus removed, now requires double-click
     }
 
     // Initial setup on window load
     window.addEventListener('load', () => {
-      resizeCanvas(); // Set initial canvas size and draw grid
-      addBar('#b3e5fc'); // Add an initial blue bar
+      window.resizeCanvas(); // Set initial canvas size and draw grid
+      window.addBar('#b3e5fc'); // Add an initial blue bar
     });
     
     // Resize canvases when window is resized
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', window.resizeCanvas);
 
     /**
      * Helper function to create a deep clone of the bars array,
@@ -1289,6 +1312,8 @@
       document.getElementById("canvas-container").appendChild(label);
       bar.labels[type] = label;
       label.dispatchEvent(new Event('input'));
+      // Remove the temporary measureSpan after use to prevent whitespace
+      document.body.removeChild(measureSpan);
     }
 
     /**
@@ -1296,7 +1321,7 @@
      * @param {string} color - The fill color of the bar.
      * @param {boolean} [dashed=false] - Whether the bar should have a dashed border.
      */
-    function addBar(color, dashed = false) {
+    window.addBar = function(color, dashed = false) {
       // Save current state for undo
       barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
       barRedoStack = []; // Clear redo stack on new action
@@ -1328,7 +1353,7 @@
      * @param {HTMLElement} btn - The button element that was clicked.
      * @param {string} color - The color to set for the pen.
      */
-    function toggleDrawMode(btn, color) {
+    window.toggleDrawMode = function(btn, color) {
       const isActive = btn && btn.classList.contains('active'); // Check if button exists and is active
       // Remove 'active' class from all color buttons
       document.querySelectorAll('.color-button').forEach(b => b.classList.remove('active'));
@@ -1351,7 +1376,7 @@
     /**
      * Undoes the last drawing action.
      */
-    function undoDraw() {
+    window.undoDraw = function() {
       if (undoStack.length > 0) {
         redoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state for undo
         const lastState = undoStack.pop(); // Get previous state from undo stack
@@ -1363,7 +1388,7 @@
     /**
      * Redoes the last undone drawing action.
      */
-    function redoDraw() {
+    window.redoDraw = function() {
       if (redoStack.length > 0) {
         undoStack.push(drawingCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height)); // Save current state to undo stack
         const nextState = redoStack.pop(); // Get next state from redo stack
@@ -1376,7 +1401,7 @@
      * Undoes the last bar manipulation action.
      * Restores previous bar states and recreates labels.
      */
-    function undoBar() {
+    window.undoBar = function() {
       if (barUndoStack.length > 0) {
         barRedoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
         
@@ -1403,7 +1428,7 @@
      * Redoes the last undone bar manipulation action.
      * Restores next bar states and recreates labels.
      */
-    function redoBar() {
+    window.redoBar = function() {
       if (barRedoStack.length > 0) {
         barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
         
@@ -1429,7 +1454,7 @@
     /**
      * Toggles the arrow display for the selected bar.
      */
-    function toggleArrow() {
+    window.toggleArrow = function() {
       if (selectedBar) {
         barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
         barRedoStack = [];
@@ -1441,7 +1466,7 @@
     /**
      * Displays a menu to split the selected bar into multiple segments.
      */
-    function splitBar() {
+    window.splitBar = function() {
       if (!selectedBar) return; // No bar selected
 
       let menu = document.getElementById("split-menu");
@@ -1488,7 +1513,31 @@
     /**
      * Deletes the currently selected bar or textbox.
      */
-    function deleteSelectedElement() {
+    window.deleteSelectedBar = function() {
+      // Save current state for undo before deletion
+      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+      barRedoStack = [];
+
+      if (selectedBar) {
+        // Remove associated HTML labels from the DOM
+        if (selectedBar.labels) {
+          for (let type in selectedBar.labels) {
+            selectedBar.labels[type].remove();
+          }
+        }
+
+        // Filter out the selected bar from the array
+        bars = bars.filter(b => b !== selectedBar);
+        selectedBar = null; // Deselect the bar
+        document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
+        drawAll(); // Redraw all remaining bars
+      } 
+    }
+
+    /**
+     * Deletes the currently selected bar or textbox.
+     */
+    window.deleteSelectedElement = function() {
       // Save current state for undo before deletion
       barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
       barRedoStack = [];
@@ -1537,7 +1586,7 @@
     /**
      * Clears all bars, drawings, and resets the application state.
      */
-    function clearAll() {
+    window.clearAll = function() {
       bars = []; // Clear bars array
       selectedBar = null; // Deselect any bar
       barRedoStack = []; // Clear bar redo stack
@@ -1564,40 +1613,40 @@
       // Clear persistent problem display and solution bubble
       persistentProblemDisplay.textContent = '';
       persistentProblemDisplay.style.display = 'none';
-      closeSolutionBubble(); // Close and clear the solution bubble
-      closeBarModelIdeaModal(); // Close and clear the bar model idea modal
+      window.closeSolutionBubble(); // Close and clear the solution bubble
+      window.closeBarModelIdeaModal(); // Close and clear the bar model idea modal
     }
 
     /**
      * Toggles the visibility of the "About" modal.
      */
-    function toggleAbout() {
+    window.toggleAbout = function() {
       const modal = document.getElementById("aboutModal");
       modal.style.display = modal.style.display === "none" ? "block" : "none";
       // Close other modals if open
       document.getElementById("problemGeneratorModal").style.display = "none";
       document.getElementById("versionHistoryModal").style.display = "none";
-      closeSolutionBubble();
-      closeBarModelIdeaModal();
+      window.closeSolutionBubble();
+      window.closeBarModelIdeaModal();
     }
 
     /**
      * Toggles the visibility of the Version History modal.
      */
-    function toggleVersionHistory() {
+    window.toggleVersionHistory = function() {
       const modal = document.getElementById("versionHistoryModal");
       modal.style.display = modal.style.display === "none" ? "block" : "none";
       // Close other modals if open
       document.getElementById("aboutModal").style.display = "none";
       document.getElementById("problemGeneratorModal").style.display = "none";
-      closeSolutionBubble();
-      closeBarModelIdeaModal();
+      window.closeSolutionBubble();
+      window.closeBarModelIdeaModal();
     }
 
     /**
      * Toggles the visibility of the Problem Generator modal.
      */
-    function toggleProblemGenerator() {
+    window.toggleProblemGenerator = function() {
       const modal = document.getElementById("problemGeneratorModal");
       modal.style.display = modal.style.display === "none" ? "block" : "none";
       // Clear problem and solution output when opening the modal
@@ -1606,8 +1655,8 @@
       // Close other modals if open
       document.getElementById("aboutModal").style.display = "none";
       document.getElementById("versionHistoryModal").style.display = "none";
-      closeSolutionBubble();
-      closeBarModelIdeaModal();
+      window.closeSolutionBubble();
+      window.closeBarModelIdeaModal();
     }
 
     /**
@@ -1636,7 +1685,7 @@
     /**
      * Moves to the next step in the solution carousel.
      */
-    function showNextStep() {
+    window.showNextStep = function() {
         if (currentStepIndex < solutionSteps.length - 1) {
             currentStepIndex++;
             displayCurrentStep();
@@ -1646,7 +1695,7 @@
     /**
      * Moves to the previous step in the solution carousel.
      */
-    function showPreviousStep() {
+    window.showPreviousStep = function() {
         if (currentStepIndex > 0) {
             currentStepIndex--;
             displayCurrentStep();
@@ -1656,7 +1705,7 @@
     /**
      * Closes and clears the solution tips bubble.
      */
-    function closeSolutionBubble() {
+    window.closeSolutionBubble = function() {
         document.getElementById('solutionBubble').style.display = 'none';
         solutionSteps = []; // Clear steps when closed
         currentStepIndex = 0;
@@ -1666,14 +1715,14 @@
     /**
      * Toggles the visibility of the Bar Model Idea modal.
      */
-    function toggleBarModelIdeaModal() {
+    window.toggleBarModelIdeaModal = function() {
         const modal = document.getElementById("barModelIdeaModal");
         modal.style.display = modal.style.display === "none" ? "block" : "none";
         // Close other modals if open
         document.getElementById("aboutModal").style.display = "none";
         document.getElementById("problemGeneratorModal").style.display = "none";
         document.getElementById("versionHistoryModal").style.display = "none";
-        closeSolutionBubble();
+        window.closeSolutionBubble();
         // Clear content when opening
         document.getElementById('barModelIdeaContent').textContent = 'Your bar model idea will appear here.';
         document.getElementById('barModelIdeaLoading').style.display = 'none';
@@ -1682,7 +1731,7 @@
     /**
      * Closes the Bar Model Idea modal.
      */
-    function closeBarModelIdeaModal() {
+    window.closeBarModelIdeaModal = function() {
         document.getElementById('barModelIdeaModal').style.display = 'none';
         document.getElementById('barModelIdeaContent').textContent = '';
     }
@@ -1690,12 +1739,13 @@
     /**
      * Generates a word problem using the Gemini API based on user keywords.
      */
-    async function generateProblem() {
+    window.generateProblem = async function() {
       const keywordsInput = document.getElementById('problemKeywords');
       const numberTypes = Array.from(document.querySelectorAll('input[name="numberType"]:checked')).map(cb => cb.value);
       const minNumberRange = document.getElementById('minNumberRange').value;
       const maxNumberRange = document.getElementById('maxNumberRange').value;
       const operations = Array.from(document.querySelectorAll('input[name="operation"]:checked')).map(cb => cb.value);
+      const barModelTypes = Array.from(document.querySelectorAll('input[name="barModelType"]:checked')).map(cb => cb.value);
       const problemTheme = document.querySelector('input[name="problemTheme"]:checked').value;
       const problemLanguage = document.querySelector('input[name="problemLanguage"]:checked').value;
 
@@ -1707,8 +1757,8 @@
       problemOutput.textContent = '';
       persistentProblemDisplay.textContent = '';
       persistentProblemDisplay.style.display = 'none';
-      closeSolutionBubble(); // Ensure solution bubble is closed
-      closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
+      window.closeSolutionBubble(); // Ensure solution bubble is closed
+      window.closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
 
       loadingIndicator.style.display = 'block'; // Show loading indicator
 
@@ -1722,7 +1772,7 @@
         if (numberTypes.length > 0) {
             prompt += ` It must use numbers of type: ${numberTypes.join(', ')}.`;
             if (numberTypes.includes('fractions')) {
-                prompt += ` If fractions are included, represent them in LaTeX math format (e.g., $\\frac{1}{2}$).`;
+                prompt += ` If fractions are included, represent them in LaTeX math format (e.g., $\\frac{1}{2}$). Ensure fractions remain in proper/improper form and are NOT converted to mixed numbers unless the problem itself specifies mixed numbers.`;
             }
         }
         
@@ -1730,6 +1780,16 @@
 
         if (operations.length > 0) {
             prompt += ` It should involve the following operations: ${operations.join(', ')}.`;
+        }
+
+        if (barModelTypes.length > 0) {
+            prompt += ` The problem should be solvable using a bar model of type: ${barModelTypes.join(' or ')}.`;
+            if (barModelTypes.includes('comparison')) {
+                prompt += ` For 'comparison' problems, focus on scenarios where quantities are compared (e.g., "A has X more than B", "difference between two amounts").`;
+            }
+            if (barModelTypes.includes('equal parts')) {
+                prompt += ` For 'equal parts' problems, focus on scenarios where a whole is divided into equal parts (e.g., "1/3 of the total", "each person gets an equal share").`;
+            }
         }
         
         if (problemTheme !== 'any') {
@@ -1768,7 +1828,7 @@
           persistentProblemDisplay.style.display = 'block'; // Show persistent display
           renderMathInGivenElement(problemOutput); // Render LaTeX in modal output
           renderMathInGivenElement(persistentProblemDisplay); // Render LaTeX in persistent display
-          toggleProblemGenerator(); // Close the modal after generation
+          window.toggleProblemGenerator(); // Close the modal after generation
         } else {
           problemOutput.textContent = "Failed to generate problem. Please try again.";
           persistentProblemDisplay.textContent = ''; // Clear persistent display on error
@@ -1788,7 +1848,7 @@
     /**
      * Solves the currently displayed problem using the Gemini API.
      */
-    async function solveProblem() {
+    window.solveProblem = async function() {
       // Get the problem from the persistent display
       const problemText = persistentProblemDisplay.textContent;
       const loadingIndicator = document.getElementById('loadingIndicator');
@@ -1799,7 +1859,7 @@
       currentStepIndex = 0;
       solutionBubble.style.display = 'none';
       document.getElementById('solutionContent').textContent = ''; // Clear content
-      closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
+      window.closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
 
       if (!problemText || problemText.trim() === '' || problemText === 'Your generated problem will appear here.') {
         document.getElementById('solutionContent').textContent = "Please generate a problem first before trying to solve it.";
@@ -1814,7 +1874,7 @@
       try {
         let chatHistory = [];
         // Request numbered steps from the AI with bold subtitles, emphasizing brevity
-        const prompt = `Provide a clear, simple, and very concise step-by-step solution or helpful tips to solve the following math word problem. Each step should be a numbered item. If a step requires a sub-explanation, use bold text for a short subtitle within that step. Keep each step's explanation to one or two sentences, easy for elementary school students to understand, and avoid overly complex language. If mathematical expressions are part of the solution, use LaTeX math format (e.g., $\\frac{1}{2}$, $5 \\times 3$). Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
+        const prompt = `Provide a clear, simple, and very concise step-by-step solution or helpful tips to solve the following math word problem. Each step should be a numbered item. If a step requires a sub-explanation, use bold text for a short subtitle within that step. Keep each step's explanation to one or two sentences, easy for elementary school students to understand, and avoid overly complex language. If mathematical expressions are part of the solution, use LaTeX math format (e.g., $\\frac{1}{2}$, $5 \\times 3$). Ensure all numbers, especially fractions, maintain their original proper/improper fraction format (e.g., $\\frac{1}{2}$) as presented in the problem, and *do not convert them to mixed numbers* unless the problem itself uses mixed numbers. Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
         const payload = { contents: chatHistory };
         const apiKey = "AIzaSyAOEDAX_YUrTPgsWnbXUar3VGcz4LqHCGk"; 
@@ -1835,15 +1895,14 @@
           const fullSolutionText = result.candidates[0].content.parts[0].text;
           console.log("Full Solution Text from API:", fullSolutionText); // Added for debugging
 
-          // Parse the solution into steps based on numbered list
-          // Split by "N. " where N is a digit, ensuring it's at the start of a line or after a newline
-          solutionSteps = fullSolutionText.split(/\n\d+\.\s|\d+\.\s/).filter(step => step.trim() !== '').map(step => step.trim());
+          // Parse the solution into steps based on numbered list, wrapping each in a paragraph
+          solutionSteps = fullSolutionText.split(/\n\d+\.\s|\d+\.\s/).filter(step => step.trim() !== '').map(step => `<p>${step.trim()}</p>`);
           
           if (solutionSteps.length === 0 && fullSolutionText.trim() !== '') {
               // Fallback if parsing fails but there's content, treat as one step
-              solutionSteps = [fullSolutionText];
+              solutionSteps = [`<p>${fullSolutionText}</p>`];
           } else if (solutionSteps.length === 0 && fullSolutionText.trim() === '') {
-              solutionSteps = ["No solution steps could be generated."];
+              solutionSteps = ["<p>No solution steps could be generated.</p>"];
           }
 
           currentStepIndex = 0;
@@ -1874,7 +1933,7 @@
     /**
      * Generates a bar model idea for the currently displayed problem using the Gemini API.
      */
-    async function generateBarModelIdea() {
+    window.generateBarModelIdea = async function() {
       const problemText = persistentProblemDisplay.textContent;
       const barModelIdeaContent = document.getElementById('barModelIdeaContent');
       const barModelIdeaLoading = document.getElementById('barModelIdeaLoading');
@@ -1882,17 +1941,17 @@
       // Clear previous content and show modal
       barModelIdeaContent.textContent = '';
       barModelIdeaLoading.style.display = 'block';
-      toggleBarModelIdeaModal(); // Open and clear other modals
+      window.toggleBarModelIdeaModal(); // Open and clear other modals
 
       if (!problemText || problemText.trim() === '' || problemText === 'Your generated problem will appear here.') {
-        barModelIdeaContent.textContent = "请先生成一个问题，然后才能获取条形模型构思。";
+        barModelIdeaContent.textContent = "Please generate a problem first before trying to get a bar model idea.";
         barModelIdeaLoading.style.display = 'none';
         return;
       }
 
       try {
         let chatHistory = [];
-        const prompt = `Given the following math word problem, describe how to represent it using bar models. Focus on the visual structure, number of bars, their relative sizes, and what each part represents. Do not solve the problem or provide any numerical answers. Keep the description concise and easy to understand for elementary students. Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
+        const prompt = `Given the following math word problem, describe how to represent it using bar models. Focus on the visual structure, number of bars, their relative sizes, and what each part represents. Do not solve the problem or provide any numerical answers. Keep the description concise and easy to understand for elementary students. Ensure all numbers, especially fractions, maintain their original proper/improper fraction format (e.g., $\\frac{1}{2}$) as presented in the problem, and *do not convert them to mixed numbers*. Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
         const payload = { contents: chatHistory };
         const apiKey = "AIzaSyAOEDAX_YUrTPgsWnbXUar3VGcz4LqHCGk"; 
@@ -1913,14 +1972,14 @@
           barModelIdeaContent.innerHTML = text; // Use innerHTML to allow KaTeX to render
           renderMathInGivenElement(barModelIdeaContent); // Render LaTeX
         } else {
-          barModelIdeaContent.textContent = "未能生成条形模型构思。请重试。";
+          barModelIdeaContent.textContent = "Failed to generate bar model idea. Please try again.";
           console.error("Gemini API response structure unexpected for bar model idea:", result);
         }
       } catch (error) {
-        barModelIdeaContent.textContent = "生成条形模型构思时出错。请检查您的网络连接或稍后重试。";
+        barModelIdeaContent.textContent = "Error generating bar model idea. Please check your network connection or try again later.";
         console.error("Error calling Gemini API for bar model idea:", error);
       } finally {
-        barModelIdeaLoading.style.display = 'none'; // Hide loading indicator
+        loadingIndicator.style.display = 'none'; // Hide loading indicator
       }
     }
 
@@ -1928,7 +1987,7 @@
      * Exports the canvas content as a PNG image.
      * Includes all canvas layers (background, bars, drawing) and HTML elements (labels, problem, copyright).
      */
-    function exportCanvas() {
+    window.exportCanvas = function() {
       // Create a temporary canvas to merge all layers
       const exportCanvasEl = document.createElement('canvas');
       // Set canvas dimensions to encompass all content
