@@ -631,7 +631,7 @@
     <p>"Think in Bars!" was created based on real classroom needs, especially for pupils who struggle to process word problems abstractly. By turning numbers into visuals, pupils can truly <em>see the math</em> behind the words.</p>
     <p>This tool was developed by <strong>Mr. Hui Kar Loong</strong><br>
     (<em>Guru Cemerlang Matematik Sekolah Rendah</em>)<br>
-    with the assistance of <strong>ChatGPT</strong> and **Gemini** by Google.</p>
+    with the assistance of <strong>ChatGPT</strong> and <strong>Gemini<strong> by Google.</p>
     
     <div style="text-align:right; margin-top:16px;">
       <button onclick="toggleAbout()" style="padding: 6px 12px; background: #dc3545; color: white;
@@ -646,20 +646,20 @@
     <h3>Version 1.0 Features (Initial Release)</h3>
     <ul>
       <li><strong>Basic Bar Drawing:</strong> Create and manipulate solid-colored bar models.</li>
+      <li><strong>New Bar Types:</strong> Introduce dashed bars for representing unknown or removed quantities.</li>
       <li><strong>Bar Resizing & Dragging:</strong> Easily adjust the size and position of bars on the canvas.</li>
+      <li><strong>Bar Splitting:</strong> Divide existing bars into multiple equal segments.</li>
       <li><strong>Adjustable Grid:</strong> Customize the background grid size for precise alignment.</li>
       <li><strong>Freehand Drawing:</strong> Use a pen tool with multiple colors for annotations, including undo/redo functionality.</li>
+      <li><strong>Dynamic Labels:</strong> Add draggable text and number labels directly to bars for clear annotation.</li>
+      <li><strong>Toggleable Arrows:</strong> Add directional arrows to bars to indicate quantities or relationships.</li>
       <li><strong>About Section:</strong> Access information about the tool and its purpose.</li>
-      <li><strong>Export Canvas:</strong> Save your bar models as an image (PNG).</li>
       <li><strong>Clear All:</strong> Reset the canvas by clearing all bars and drawings.</li>
     </ul>
 
     <h3>Version 2.0 Features (Enhancements)</h3>
     <ul>
-      <li><strong>New Bar Types:</strong> Introduce dashed bars for representing unknown or removed quantities.</li>
-      <li><strong>Bar Splitting:</strong> Divide existing bars into multiple equal segments.</li>
-      <li><strong>Dynamic Labels:</strong> Add draggable text and number labels directly to bars for clear annotation.</li>
-      <li><strong>Toggleable Arrows:</strong> Add directional arrows to bars to indicate quantities or relationships.</li>
+      <li><strong>Export Canvas:</strong> Save your bar models as an image (PNG).</li>
       <li><strong>AI-Powered Problem Generator (Q°):</strong> Generate unique word problems based on specified number types (whole, fractions, decimals, percentage), ranges, operations, themes, and keywords. Fractions are rendered using LaTeX.</li>
       <li><strong>AI-Powered Solution Provider (A°):</strong> Get concise, step-by-step solutions or tips for generated problems, presented in an easy-to-follow carousel format with bold subtitles and LaTeX math rendering.</li>
       <li><strong>Persistent Problem Display:</strong> The generated problem remains visible below the title for easy reference.</li>
@@ -1784,60 +1784,151 @@
     function exportCanvas() {
       // Create a temporary canvas to merge all layers
       const exportCanvasEl = document.createElement('canvas');
-      exportCanvasEl.width = canvas.width;
-      exportCanvasEl.height = canvas.height;
-      const exportCtx = exportCanvasEl.getContext('2d');
+      // Set canvas dimensions to encompass all content
+      const allElements = document.querySelectorAll('#canvas-container, #persistentProblemDisplay, div[style*="bottom: 90px; right: 12px;"], input.bar-label');
+      let minX = window.innerWidth;
+      let minY = window.innerHeight;
+      let maxX = 0;
+      let maxY = 0;
 
-      // Draw background grid
-      exportCtx.drawImage(bgCanvas, 0, 0);
-      // Draw bars
-      exportCtx.drawImage(canvas, 0, 0);
-      // Draw freehand drawing
-      exportCtx.drawImage(drawingCanvas, 0, 0);
+      allElements.forEach(el => {
+          const rect = el.getBoundingClientRect();
+          minX = Math.min(minX, rect.left);
+          minY = Math.min(minY, rect.top);
+          maxX = Math.max(maxX, rect.right);
+          maxY = Math.max(maxY, rect.bottom);
+      });
+
+      // Add some padding to the exported image
+      const padding = 20;
+      exportCanvasEl.width = (maxX - minX) + 2 * padding;
+      exportCanvasEl.height = (maxY - minY) + 2 * padding;
+      const exportCtx = exportCanvasEl.getContext('2d');
+      exportCtx.fillStyle = 'white';
+      exportCtx.fillRect(0, 0, exportCanvasEl.width, exportCanvasEl.height); // Fill with white background
+
+      // Adjust drawing origin to account for minX, minY and padding
+      const offsetX = -minX + padding;
+      const offsetY = -minY + padding;
+
+      // Draw background grid (shifted)
+      exportCtx.drawImage(bgCanvas, offsetX, offsetY, bgCanvas.width, bgCanvas.height);
+      // Draw bars (shifted)
+      exportCtx.drawImage(canvas, offsetX, offsetY, canvas.width, canvas.height);
+      // Draw freehand drawing (shifted)
+      exportCtx.drawImage(drawingCanvas, offsetX, offsetY, drawingCanvas.width, drawingCanvas.height);
 
       // Collect all HTML elements to be drawn
-      const htmlElementsToDraw = Array.from(document.querySelectorAll('#canvas-container input.bar-label')); // Removed textbox selector
-      let elementsDrawnCount = 0;
+      const htmlElementsToDraw = [];
 
-      // Function to check if all elements are drawn and then trigger download
-      const checkAndDownload = () => {
-        elementsDrawnCount++;
-        if (elementsDrawnCount === htmlElementsToDraw.length || htmlElementsToDraw.length === 0) {
-          const dataURL = exportCanvasEl.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = dataURL;
-          a.download = 'bar_model.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          exportCanvasEl.remove(); // Clean up temporary canvas
-        }
-      };
-
-      if (htmlElementsToDraw.length === 0) {
-        checkAndDownload(); // No HTML elements, just download the canvas content
-      } else {
-        htmlElementsToDraw.forEach(el => {
-          // Create a temporary SVG element to render HTML element content
-          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${el.offsetWidth}" height="${el.offsetHeight}">
-                         <foreignObject width="100%" height="100%">
-                           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: 'Inter', sans-serif; font-size: ${el.style.fontSize}; color: ${el.style.color}; text-align: ${el.style.textAlign}; padding: ${el.style.padding}; border: ${el.style.border}; background: ${el.style.background}; box-shadow: ${el.style.boxShadow}; border-radius: ${el.style.borderRadius};">
-                             ${el.tagName === 'INPUT' ? el.value : el.innerHTML.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
-                           </div>
-                         </foreignObject>
-                       </svg>`;
-          const img = new Image();
-          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-          img.onload = () => {
-            exportCtx.drawImage(img, parseFloat(el.style.left), parseFloat(el.style.top));
-            checkAndDownload();
-          };
-          img.onerror = (err) => {
-            console.error("Error loading SVG for export:", err);
-            alert("Error exporting image. Please ensure all elements are loaded correctly.");
-            exportCanvasEl.remove();
-          };
+      // Add bar labels
+      document.querySelectorAll('#canvas-container input.bar-label').forEach(el => {
+        htmlElementsToDraw.push({
+          element: el,
+          x: el.getBoundingClientRect().left + offsetX,
+          y: el.getBoundingClientRect().top + offsetY
         });
+      });
+
+      // Add persistent problem display
+      const problemDisplay = document.getElementById('persistentProblemDisplay');
+      if (problemDisplay && problemDisplay.style.display !== 'none') {
+        htmlElementsToDraw.push({
+          element: problemDisplay,
+          x: problemDisplay.getBoundingClientRect().left + offsetX,
+          y: problemDisplay.getBoundingClientRect().top + offsetY
+        });
+      }
+
+      // Add copyright notice
+      const copyrightNotice = document.querySelector('div[style*="bottom: 90px; right: 12px;"]');
+      if (copyrightNotice) { 
+        htmlElementsToDraw.push({
+          element: copyrightNotice,
+          x: copyrightNotice.getBoundingClientRect().left + offsetX,
+          y: copyrightNotice.getBoundingClientRect().top + offsetY
+        });
+      }
+
+      let elementsToProcess = htmlElementsToDraw.length;
+
+      // If no HTML elements, just download the canvas content
+      if (elementsToProcess === 0) {
+        downloadCanvas(exportCanvasEl);
+        return;
+      }
+
+      htmlElementsToDraw.forEach(item => {
+        const el = item.element;
+        const x = item.x;
+        const y = item.y;
+
+        const computedStyle = window.getComputedStyle(el);
+        let htmlContent;
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          htmlContent = el.value;
+        } else {
+          htmlContent = el.innerHTML;
+        }
+
+        // Create a temporary SVG element to render HTML element content
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${el.offsetWidth}" height="${el.offsetHeight}">
+                       <foreignObject width="100%" height="100%">
+                         <div xmlns="http://www.w3.org/1999/xhtml" style="
+                           font-family: '${computedStyle.fontFamily}';
+                           font-size: ${computedStyle.fontSize};
+                           color: ${computedStyle.color};
+                           text-align: ${computedStyle.textAlign};
+                           padding: ${computedStyle.padding};
+                           border: ${computedStyle.border};
+                           background: ${computedStyle.backgroundColor};
+                           box-shadow: ${computedStyle.boxShadow};
+                           border-radius: ${computedStyle.borderRadius};
+                           line-height: ${computedStyle.lineHeight};
+                           white-space: ${computedStyle.whiteSpace};
+                           word-wrap: ${computedStyle.wordWrap};
+                           overflow: ${computedStyle.overflow};
+                           text-overflow: ${computedStyle.textOverflow};
+                           display: ${computedStyle.display};
+                           justify-content: ${computedStyle.justifyContent};
+                           align-items: ${computedStyle.alignItems};
+                           gap: ${computedStyle.gap};
+                           font-weight: ${computedStyle.fontWeight};
+                           font-style: ${computedStyle.fontStyle};
+                         ">
+                           ${htmlContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                         </div>
+                       </foreignObject>
+                     </svg>`;
+        const img = new Image();
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+        img.onload = () => {
+          exportCtx.drawImage(img, x, y);
+          elementsToProcess--;
+          if (elementsToProcess === 0) {
+            downloadCanvas(exportCanvasEl);
+          }
+        };
+        img.onerror = (err) => {
+          console.error("Error loading SVG for export:", err);
+          alert("Error exporting image. Please ensure all elements are loaded correctly.");
+          exportCanvasEl.remove();
+          elementsToProcess--; // Decrement even on error to avoid hanging
+          if (elementsToProcess === 0) {
+            downloadCanvas(exportCanvasEl); // Attempt to download what was drawn
+          }
+        };
+      });
+
+      function downloadCanvas(canvasToDownload) {
+        const dataURL = canvasToDownload.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = 'bar_model.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        canvasToDownload.remove(); // Clean up temporary canvas
       }
     }
 
