@@ -1727,7 +1727,7 @@
         const prompt = `Provide a clear, simple, and very concise step-by-step solution or helpful tips to solve the following math word problem. Each step should be a numbered item. If a step requires a sub-explanation, use bold text for a short subtitle within that step. Keep each step's explanation to one or two sentences, easy for elementary school students to understand, and avoid overly complex language. If mathematical expressions are part of the solution, use LaTeX math format (e.g., $\\frac{1}{2}$, $5 \\times 3$). Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
         const payload = { contents: chatHistory };
-        const apiKey = ""; 
+        const apiKey = "AIzaSyAOEDAX_YUrTPgsWnbXUar3VGcz4LqHCGk"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         
         const response = await fetch(apiUrl, {
