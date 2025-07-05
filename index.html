@@ -155,7 +155,7 @@
     }
     
     /* About Modal styling */
-    #aboutModal, #problemGeneratorModal, #versionHistoryModal {
+    #aboutModal, #problemGeneratorModal, #versionHistoryModal, #barModelIdeaModal {
       display: none; /* Hidden by default */
       position: fixed;
       top: 50%;
@@ -175,7 +175,7 @@
       overflow-y: auto; /* Enable scrolling for modal content */
     }
 
-    #aboutModal h2, #problemGeneratorModal h2, #versionHistoryModal h2 {
+    #aboutModal h2, #problemGeneratorModal h2, #versionHistoryModal h2, #barModelIdeaModal h2 {
       color: #333;
       margin-top: 0;
       margin-bottom: 15px;
@@ -275,13 +275,37 @@
     #problemGeneratorModal button.close:hover {
       background: #5a6268;
     }
-    /* Moved solve button styling to global scope as it's now a top-level button */
+    /* Adjusted Q° button styling to a darker yellow tone */
+    .top-left-buttons .q-button {
+      background: linear-gradient(45deg, #FFC107, #FFA000); /* Amber to Dark Orange/Amber */
+      color: black;
+      border: 1px solid #FF8F00; /* A darker yellow border */
+      font-weight: bold;
+    }
+    .top-left-buttons .q-button:hover {
+      background: linear-gradient(45deg, #FFA000, #FF8F00); /* Darker on hover */
+    }
+
+    /* Adjusted A° button styling to a medium yellow tone */
     .top-left-buttons .solve {
-      background: #FFA500; /* Orange color for A° button */
-      color: white;
+      background: linear-gradient(45deg, #FFD54F, #FFEB3B); /* Medium Yellow to Light Yellow */
+      color: black;
+      border: 1px solid #FFC107; /* A yellow border */
+      font-weight: bold;
     }
     .top-left-buttons .solve:hover {
-      background: #CC8400; /* Darker orange on hover */
+      background: linear-gradient(45deg, #FFEB3B, #FFD54F); /* Darker on hover */
+    }
+
+    /* Adjusted M° button styling to a lighter yellow tone */
+    .top-left-buttons .m-button {
+      background: linear-gradient(45deg, #FFF9C4, #FFFFE0); /* Cream to Lightest Yellow */
+      color: black;
+      border: 1px solid #FFECB3; /* A lighter yellow border */
+      font-weight: bold;
+    }
+    .top-left-buttons .m-button:hover {
+      background: linear-gradient(45deg, #FFFFE0, #FFF9C4); /* Darker on hover */
     }
 
     #problemOutput {
@@ -348,7 +372,7 @@
       .title-banner div:last-child {
         font-size: 14px;
       }
-      #aboutModal, #problemGeneratorModal, #versionHistoryModal {
+      #aboutModal, #problemGeneratorModal, #versionHistoryModal, #barModelIdeaModal {
         padding: 15px;
         font-size: 14px;
       }
@@ -475,12 +499,36 @@
         color: #333;
     }
 
+    /* Bar Model Idea Modal specific styles */
+    #barModelIdeaModal {
+      top: calc(50% + 150px); /* Position below solution bubble, adjust as needed */
+      max-height: 30vh; /* Make it shorter */
+    }
+    #barModelIdeaModal #barModelIdeaContent {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        min-height: 50px;
+        white-space: normal;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        font-style: italic;
+        color: #343a40;
+        overflow-y: auto; /* Enable scrolling for content */
+        max-height: 150px; /* Limit height */
+    }
+
     @media (max-width: 768px) {
-        #solutionBubble {
+        #solutionBubble, #barModelIdeaModal {
             width: calc(100% - 40px); /* Adjust width for small screens */
             right: 20px;
             left: 20px;
             transform: translateY(-50%);
+        }
+        #barModelIdeaModal {
+            top: calc(50% + 100px); /* Adjust for smaller screens */
         }
     }
   </style>
@@ -504,19 +552,25 @@
       Versions
     </button>
 
-    <!-- ✨ Generate Problem Button -->
-    <button onclick="toggleProblemGenerator()" class="tool-button" title="Generate a Word Problem with AI"
+    <!-- ✨ Generate Problem Button (Q°) -->
+    <button onclick="toggleProblemGenerator()" class="tool-button q-button" title="Generate a Word Problem with AI"
             style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
-                   background: linear-gradient(45deg, #FFD700, #FFA500); color: black; border: 1px solid #FFC107; font-weight: bold;
                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
       Q°
     </button>
 
-    <!-- 💡 AI Solve Button (Standalone) -->
+    <!-- 💡 AI Solve Button (A°) -->
     <button onclick="solveProblem()" class="tool-button solve" title="Get AI Solution/Tips for the current problem"
             style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
                    box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
       A°
+    </button>
+
+    <!-- ✨ Bar Model Idea Button (M°) -->
+    <button onclick="generateBarModelIdea()" class="tool-button m-button" title="Get AI Bar Model Idea"
+            style="padding: 8px 14px; font-size: 14px; white-space: nowrap; /* Ensure single line */
+                   box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 6px; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease;">
+      M°
     </button>
   </div>
 
@@ -631,7 +685,7 @@
     <p>"Think in Bars!" was created based on real classroom needs, especially for pupils who struggle to process word problems abstractly. By turning numbers into visuals, pupils can truly <em>see the math</em> behind the words.</p>
     <p>This tool was developed by <strong>Mr. Hui Kar Loong</strong><br>
     (<em>Guru Cemerlang Matematik Sekolah Rendah</em>)<br>
-    with the assistance of <strong>ChatGPT</strong> and <strong>Gemini<strong> by Google.</p>
+    with the assistance of <strong>ChatGPT</strong> and **Gemini** by Google.</p>
     
     <div style="text-align:right; margin-top:16px;">
       <button onclick="toggleAbout()" style="padding: 6px 12px; background: #dc3545; color: white;
@@ -643,28 +697,27 @@
   <div id="versionHistoryModal">
     <h2 style="margin-top:0;">🚀 Version Features</h2>
     
-    <h3>Version 1.0 Features (Initial Release)</h3>
+    <h3>核心功能 (Core Features)</h3>
     <ul>
-      <li><strong>Basic Bar Drawing:</strong> Create and manipulate solid-colored bar models.</li>
-      <li><strong>New Bar Types:</strong> Introduce dashed bars for representing unknown or removed quantities.</li>
-      <li><strong>Bar Resizing & Dragging:</strong> Easily adjust the size and position of bars on the canvas.</li>
-      <li><strong>Bar Splitting:</strong> Divide existing bars into multiple equal segments.</li>
-      <li><strong>Adjustable Grid:</strong> Customize the background grid size for precise alignment.</li>
-      <li><strong>Freehand Drawing:</strong> Use a pen tool with multiple colors for annotations, including undo/redo functionality.</li>
-      <li><strong>Dynamic Labels:</strong> Add draggable text and number labels directly to bars for clear annotation.</li>
-      <li><strong>Toggleable Arrows:</strong> Add directional arrows to bars to indicate quantities or relationships.</li>
-      <li><strong>About Section:</strong> Access information about the tool and its purpose.</li>
-      <li><strong>Clear All:</strong> Reset the canvas by clearing all bars and drawings.</li>
+      <li><strong>条形模型创建与定制:</strong> 创建和操作实心或虚线条形模型，虚线用于表示未知或移除的数量。</li>
+      <li><strong>条形模型操作:</strong> 轻松调整条形模型的大小和位置；将现有条形模型分割成多个等段；直接在条形模型上添加可拖动的文本和数字标签，以进行清晰的注释；为条形模型添加方向箭头以指示数量或关系。</li>
+      <li><strong>可调节网格:</strong> 自定义背景网格大小，以实现精确对齐。</li>
+      <li><strong>自由手绘:</strong> 使用多种颜色的画笔工具进行注释，包括撤销/重做功能。</li>
     </ul>
 
-    <h3>Version 2.0 Features (Enhancements)</h3>
+    <h3>增强功能 (Enhancements)</h3>
     <ul>
-      <li><strong>Export Canvas:</strong> Save your bar models as an image (PNG).</li>
-      <li><strong>AI-Powered Problem Generator (Q°):</strong> Generate unique word problems based on specified number types (whole, fractions, decimals, percentage), ranges, operations, themes, and keywords. Fractions are rendered using LaTeX.</li>
-      <li><strong>AI-Powered Solution Provider (A°):</strong> Get concise, step-by-step solutions or tips for generated problems, presented in an easy-to-follow carousel format with bold subtitles and LaTeX math rendering.</li>
-      <li><strong>Persistent Problem Display:</strong> The generated problem remains visible below the title for easy reference.</li>
-      <li><strong>Enhanced Responsiveness:</strong> Improved layout and usability across various screen sizes (mobile, tablet, desktop).</li>
-      <li><strong>Keyboard Shortcuts:</strong> Quick access to common actions like undo/redo, delete, toggle arrow, add bar, and clear all.</li>
+      <li><strong>导出画布:</strong> 将您的条形模型保存为图像 (PNG)。</li>
+      <li><strong>持久化问题显示:</strong> 生成的问题会一直显示在标题下方，以便于参考。</li>
+      <li><strong>增强响应性:</strong> 改进了在各种屏幕尺寸（手机、平板电脑、桌面）上的布局和可用性。</li>
+      <li><strong>键盘快捷键:</strong> 快速访问常用操作，如撤销/重做、删除、切换箭头、添加条形和清除所有。</li>
+    </ul>
+
+    <h3>AI 驱动功能 (AI-Powered Features)</h3>
+    <ul>
+      <li><strong>AI 驱动问题生成器 (Q°):</strong> 根据指定的数字类型（整数、分数、小数、百分比）、范围、运算、主题和关键词生成独特的应用题。分数使用 LaTeX 渲染。</li>
+      <li><strong>AI 驱动解决方案提供器 (A°):</strong> 为生成的问题提供简洁、分步的解决方案或提示，以易于理解的轮播格式呈现，带有粗体副标题和 LaTeX 数学渲染。</li>
+      <li><strong>AI 驱动条形模型构思 (M°):</strong> 根据当前问题生成关于如何使用条形模型表示该问题的文本描述。</li>
     </ul>
 
     <div style="text-align:right; margin-top:16px;">
@@ -750,6 +803,17 @@
       <button class="close-button" onclick="closeSolutionBubble()">&times;</button>
   </div>
 
+  <!-- Bar Model Idea Modal (hidden by default) -->
+  <div id="barModelIdeaModal">
+    <h2>✨ Bar Model Idea</h2>
+    <div id="barModelIdeaContent"></div>
+    <div id="barModelIdeaLoading" class="loading-indicator">Generating idea</div>
+    <div style="text-align:right; margin-top:16px;">
+      <button onclick="closeBarModelIdeaModal()" class="close-button"
+              style="background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; padding: 6px 12px;">Close</button>
+    </div>
+  </div>
+
   <!-- Copyright Notice -->
   <div style="position: fixed; bottom: 90px; right: 12px; font-size: 12px; color: #777; z-index: 50;">
     © 2025 Hui Kar Loong. All rights reserved.
@@ -805,12 +869,10 @@
 
     // Keyboard shortcuts mapping (simplified)
     const KEYBOARD_SHORTCUTS = {
-      'KeyZ': { ctrlKey: true, shiftKey: false, func: undoBar, description: 'Undo Bar Action' },
-      'KeyY': { ctrlKey: true, shiftKey: false, func: redoBar, description: 'Redo Bar Action' },
-      'KeyZ': { ctrlKey: true, shiftKey: true, func: redoBar, description: 'Redo Bar Action (Shift+Ctrl+Z)' }, // For consistency with some systems
+      'KeyZ': { ctrlKey: true, func: undoBar, description: 'Undo Bar Action (Ctrl+Z)' },
+      'KeyY': { ctrlKey: true, func: redoBar, description: 'Redo Bar Action (Ctrl+Y)' },
       'Delete': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
       'Backspace': { func: deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
-      // Removed save/load/export/textbox shortcuts
       'KeyA': { func: toggleArrow, description: 'Toggle Arrow' },
       'KeyD': { func: toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
       'KeyB': { func: addBar, args: ['#b3e5fc'], description: 'Add Blue Bar' },
@@ -863,7 +925,6 @@
 
       // Update positions of HTML labels
       updateLabels();
-      // updateTextBoxes(); // Removed as textboxes are removed
     }
 
     /**
@@ -1126,13 +1187,10 @@
       // label.focus(); // Auto-focus removed, now requires double-click
     }
 
-    // Removed addTextBox functionality
-
     // Initial setup on window load
     window.addEventListener('load', () => {
       resizeCanvas(); // Set initial canvas size and draw grid
       addBar('#b3e5fc'); // Add an initial blue bar
-      // loadState(); // Removed loadState on startup
     });
     
     // Resize canvases when window is resized
@@ -1507,6 +1565,7 @@
       persistentProblemDisplay.textContent = '';
       persistentProblemDisplay.style.display = 'none';
       closeSolutionBubble(); // Close and clear the solution bubble
+      closeBarModelIdeaModal(); // Close and clear the bar model idea modal
     }
 
     /**
@@ -1519,6 +1578,7 @@
       document.getElementById("problemGeneratorModal").style.display = "none";
       document.getElementById("versionHistoryModal").style.display = "none";
       closeSolutionBubble();
+      closeBarModelIdeaModal();
     }
 
     /**
@@ -1531,6 +1591,7 @@
       document.getElementById("aboutModal").style.display = "none";
       document.getElementById("problemGeneratorModal").style.display = "none";
       closeSolutionBubble();
+      closeBarModelIdeaModal();
     }
 
     /**
@@ -1546,6 +1607,7 @@
       document.getElementById("aboutModal").style.display = "none";
       document.getElementById("versionHistoryModal").style.display = "none";
       closeSolutionBubble();
+      closeBarModelIdeaModal();
     }
 
     /**
@@ -1555,7 +1617,9 @@
     function displayCurrentStep() {
         const solutionContent = document.getElementById('solutionContent');
         const prevBtn = document.getElementById('prevStepBtn');
-        const nextBtn = document.getElementById('nextStepBtn');
+        const nextBtn = document.getElementById('nextStepBtn'); 
+        console.log('Solution Steps:', solutionSteps); // Debugging
+        console.log('Current Step Index:', currentStepIndex); // Debugging
 
         if (solutionSteps.length > 0) {
             solutionContent.innerHTML = solutionSteps[currentStepIndex];
@@ -1600,6 +1664,30 @@
     }
 
     /**
+     * Toggles the visibility of the Bar Model Idea modal.
+     */
+    function toggleBarModelIdeaModal() {
+        const modal = document.getElementById("barModelIdeaModal");
+        modal.style.display = modal.style.display === "none" ? "block" : "none";
+        // Close other modals if open
+        document.getElementById("aboutModal").style.display = "none";
+        document.getElementById("problemGeneratorModal").style.display = "none";
+        document.getElementById("versionHistoryModal").style.display = "none";
+        closeSolutionBubble();
+        // Clear content when opening
+        document.getElementById('barModelIdeaContent').textContent = 'Your bar model idea will appear here.';
+        document.getElementById('barModelIdeaLoading').style.display = 'none';
+    }
+
+    /**
+     * Closes the Bar Model Idea modal.
+     */
+    function closeBarModelIdeaModal() {
+        document.getElementById('barModelIdeaModal').style.display = 'none';
+        document.getElementById('barModelIdeaContent').textContent = '';
+    }
+
+    /**
      * Generates a word problem using the Gemini API based on user keywords.
      */
     async function generateProblem() {
@@ -1620,10 +1708,11 @@
       persistentProblemDisplay.textContent = '';
       persistentProblemDisplay.style.display = 'none';
       closeSolutionBubble(); // Ensure solution bubble is closed
+      closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
 
       loadingIndicator.style.display = 'block'; // Show loading indicator
 
-      // Store the selected language for later use in solveProblem
+      // Store the selected language for later use in solveProblem and generateBarModelIdea
       lastProblemLanguage = problemLanguage;
 
       try {
@@ -1710,6 +1799,7 @@
       currentStepIndex = 0;
       solutionBubble.style.display = 'none';
       document.getElementById('solutionContent').textContent = ''; // Clear content
+      closeBarModelIdeaModal(); // Ensure bar model idea modal is closed
 
       if (!problemText || problemText.trim() === '' || problemText === 'Your generated problem will appear here.') {
         document.getElementById('solutionContent').textContent = "Please generate a problem first before trying to solve it.";
@@ -1737,11 +1827,14 @@
         });
         
         const result = await response.json();
+        console.log("Gemini API solution response:", result); // Added for debugging
 
         if (result.candidates && result.candidates.length > 0 &&
             result.candidates[0].content && result.candidates[0].content.parts &&
             result.candidates[0].content.parts.length > 0) {
           const fullSolutionText = result.candidates[0].content.parts[0].text;
+          console.log("Full Solution Text from API:", fullSolutionText); // Added for debugging
+
           // Parse the solution into steps based on numbered list
           // Split by "N. " where N is a digit, ensuring it's at the start of a line or after a newline
           solutionSteps = fullSolutionText.split(/\n\d+\.\s|\d+\.\s/).filter(step => step.trim() !== '').map(step => step.trim());
@@ -1779,7 +1872,61 @@
     }
 
     /**
+     * Generates a bar model idea for the currently displayed problem using the Gemini API.
+     */
+    async function generateBarModelIdea() {
+      const problemText = persistentProblemDisplay.textContent;
+      const barModelIdeaContent = document.getElementById('barModelIdeaContent');
+      const barModelIdeaLoading = document.getElementById('barModelIdeaLoading');
+
+      // Clear previous content and show modal
+      barModelIdeaContent.textContent = '';
+      barModelIdeaLoading.style.display = 'block';
+      toggleBarModelIdeaModal(); // Open and clear other modals
+
+      if (!problemText || problemText.trim() === '' || problemText === 'Your generated problem will appear here.') {
+        barModelIdeaContent.textContent = "请先生成一个问题，然后才能获取条形模型构思。";
+        barModelIdeaLoading.style.display = 'none';
+        return;
+      }
+
+      try {
+        let chatHistory = [];
+        const prompt = `Given the following math word problem, describe how to represent it using bar models. Focus on the visual structure, number of bars, their relative sizes, and what each part represents. Do not solve the problem or provide any numerical answers. Keep the description concise and easy to understand for elementary students. Respond in ${lastProblemLanguage}. Problem: "${problemText}"`;
+        chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+        const payload = { contents: chatHistory };
+        const apiKey = "AIzaSyAOEDAX_YUrTPgsWnbXUar3VGcz4LqHCGk"; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+          const text = result.candidates[0].content.parts[0].text;
+          barModelIdeaContent.innerHTML = text; // Use innerHTML to allow KaTeX to render
+          renderMathInGivenElement(barModelIdeaContent); // Render LaTeX
+        } else {
+          barModelIdeaContent.textContent = "未能生成条形模型构思。请重试。";
+          console.error("Gemini API response structure unexpected for bar model idea:", result);
+        }
+      } catch (error) {
+        barModelIdeaContent.textContent = "生成条形模型构思时出错。请检查您的网络连接或稍后重试。";
+        console.error("Error calling Gemini API for bar model idea:", error);
+      } finally {
+        barModelIdeaLoading.style.display = 'none'; // Hide loading indicator
+      }
+    }
+
+    /**
      * Exports the canvas content as a PNG image.
+     * Includes all canvas layers (background, bars, drawing) and HTML elements (labels, problem, copyright).
      */
     function exportCanvas() {
       // Create a temporary canvas to merge all layers
@@ -1849,6 +1996,18 @@
           y: copyrightNotice.getBoundingClientRect().top + offsetY
         });
       }
+
+      // Add Bar Model Idea Modal content if visible
+      const barModelIdeaModal = document.getElementById('barModelIdeaModal');
+      const barModelIdeaContent = document.getElementById('barModelIdeaContent');
+      if (barModelIdeaModal && barModelIdeaModal.style.display !== 'none' && barModelIdeaContent.textContent.trim() !== '') {
+          htmlElementsToDraw.push({
+              element: barModelIdeaContent,
+              x: barModelIdeaContent.getBoundingClientRect().left + offsetX,
+              y: barModelIdeaContent.getBoundingClientRect().top + offsetY
+          });
+      }
+
 
       let elementsToProcess = htmlElementsToDraw.length;
 
