@@ -131,6 +131,34 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    /* Color input styling */
+    .color-input {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0; /* Remove default padding */
+      -webkit-appearance: none; /* Remove default browser styling */
+      -moz-appearance: none;
+      appearance: none;
+      background-color: transparent; /* Make background transparent */
+    }
+
+    .color-input::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    .color-input::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+
+    .color-input::-moz-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
     
     /* Active state for tool buttons */
     .tool-button.active {
@@ -200,7 +228,6 @@
       border-radius: 4px;
       padding: 2px 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      max-width: 150px; /* Adjust maximum width as needed */
       overflow: hidden;
       white-space: nowrap; /* Prevent wrapping */
       text-overflow: ellipsis; /* Add ellipsis if text overflows */
@@ -681,6 +708,10 @@
 
   <!-- Toolbar for controls -->
   <div class="toolbar" id="toolbar">
+    <!-- Select Tool Button -->
+    <button onclick="window.activateSelectMode(this)" class="tool-button" id="select-tool-button" title="Select Tool">
+        <img src="https://img.icons8.com/ios-glyphs/30/cursor--v1.png" alt="Select Icon"/>
+    </button>
     <!-- Drawing Tools -->
     <div style="display:flex;align-items:center;gap:8px;">
       <img src="https://img.icons8.com/ios-glyphs/30/pencil-tip.png" title="Pen Size" alt="Pen Icon" style="width: 28px; height: 28px;">
@@ -688,9 +719,7 @@
       <button onclick="window.toggleDrawMode(this, 'black')" class="tool-button color-button" style="background:black" title="Black Pen"></button>
       <button onclick="window.toggleDrawMode(this, 'red')" class="tool-button color-button" style="background:red" title="Red Pen"></button>
       <button onclick="window.toggleDrawMode(this, 'blue')" class="tool-button color-button" style="background:blue" title="Blue Pen"></button>
-      <button onclick="window.toggleDrawMode(this, 'purple')" class="tool-button color-button" style="background:purple" title="Purple Pen"></button>
-      <button onclick="window.toggleDrawMode(this, 'orange')" class="tool-button color-button" style="background:orange" title="Orange Pen"></button>
-      <button onclick="window.toggleDrawMode(this, 'green')" class="tool-button color-button" style="background:green" title="Green Pen"></button>
+      <!-- Removed other color buttons and color picker -->
       <button onclick="window.undoDraw()" class="tool-button" title="Undo Drawing">
         <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
       </button>
@@ -701,12 +730,12 @@
 
     <!-- Bar Color/Type Selection (for adding new bars) -->
     <div style="display:flex;align-items:center;gap:6px;">
-      <button onclick="window.startBarPlacement('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
-      <button onclick="window.startBarPlacement('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
-      <button onclick="window.startBarPlacement('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
-      <button onclick="window.startBarPlacement('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
-      <button onclick="window.startBarPlacement('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
-      <button onclick="window.startBarPlacement('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
+      <button onclick="window.startBarPlacement(this, 'white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
+      <button onclick="window.startBarPlacement(this, 'black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
+      <button onclick="window.startBarPlacement(this, '#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
+      <button onclick="window.startBarPlacement(this, '#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
+      <button onclick="window.startBarPlacement(this, '#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
+      <button onclick="window.startBarPlacement(this, '#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
 
       <!-- Bar Undo/Redo -->
       <button onclick="window.undoBar()" class="tool-button" title="Undo Bar Action">
@@ -893,7 +922,7 @@
     let penColor = 'black'; // Color of the drawing pen
     let isDrawing = false; // Flag for mouse drawing
     let isTouchDrawing = false; // Flag for touch drawing
-    let currentMode = 'select'; // Current interaction mode ('select' or 'draw')
+    let currentMode = 'select'; // Current interaction mode ('select', 'draw', or 'barPlacement')
     let isDragging = false; // Flag for dragging a bar
     let isResizing = false; // Flag for resizing a bar
     let dragOffsetX = 0, dragOffsetY = 0; // Offsets for dragging
@@ -926,7 +955,7 @@
       'Backspace': { func: window.deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
       'KeyA': { func: window.toggleArrow, description: 'Toggle Arrow' },
       'KeyD': { func: window.toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
-      'KeyB': { func: window.startBarPlacement, args: ['#b3e5fc'], description: 'Start placing Blue Bar' }, // Updated shortcut
+      'KeyB': { func: window.startBarPlacement, args: [null, '#b3e5fc'], description: 'Start placing Blue Bar' }, // Updated shortcut
       'KeyC': { func: window.clearAll, description: 'Clear All' },
     };
 
@@ -1100,22 +1129,57 @@
     }
 
     /**
+     * Deactivates all tool buttons and resets canvas pointer events to default (select mode).
+     */
+    function deactivateAllTools() {
+      // Remove 'active' class from all tool buttons
+      document.querySelectorAll('.toolbar .tool-button').forEach(b => b.classList.remove('active'));
+      
+      penMode = false;
+      barPlacementMode = false;
+      canvas.style.cursor = 'default';
+      drawingCanvas.style.pointerEvents = 'none'; // Drawing canvas always off by default
+      canvas.style.pointerEvents = 'auto'; // Main canvas always on by default (for bar interaction)
+    }
+
+    /**
+     * Activates the 'select' mode for bar interaction.
+     * @param {HTMLElement} btn - The button element that was clicked (optional).
+     */
+    window.activateSelectMode = function(btn) {
+      deactivateAllTools(); // Deactivate all other tools first
+      currentMode = 'select';
+      if (btn) {
+        btn.classList.add('active'); // Activate the select tool button
+      } else {
+        // If called without a button (e.g., after placing a bar), activate the select button explicitly
+        document.getElementById('select-tool-button').classList.add('active');
+      }
+      document.getElementById('floating-bar-tools').style.display = 'none'; // Hide floating tools
+      selectedBar = null; // Deselect any bar
+      drawAll(); // Redraw to remove selection outline
+    }
+
+    /**
      * Initiates the bar placement mode.
+     * @param {HTMLElement} btn - The button element that was clicked.
      * @param {string} color - The fill color of the bar.
      * @param {boolean} [dashed=false] - Whether the bar should have a dashed border.
      */
-    window.startBarPlacement = function(color, dashed = false) {
+    window.startBarPlacement = function(btn, color, dashed = false) {
+      deactivateAllTools(); // Deactivate all other tools first
+      
       barPlacementMode = true;
       barColorToPlace = color;
       barDashedToPlace = dashed;
-      // Optionally, provide visual feedback to the user that they are in placement mode
+      currentMode = 'barPlacement';
+      btn.classList.add('active'); // Highlight the chosen bar color button
       canvas.style.cursor = 'crosshair'; 
-      // Deselect any active bar tool buttons
-      document.querySelectorAll('.tool-button.color-button').forEach(b => b.classList.remove('active'));
-      // Hide floating bar tools when in placement mode
       document.getElementById('floating-bar-tools').style.display = 'none';
-      selectedBar = null; // Deselect any bar
-      drawAll(); // Redraw to remove selection outline
+      selectedBar = null;
+      drawAll();
+      drawingCanvas.style.pointerEvents = 'none';
+      canvas.style.pointerEvents = 'auto';
     }
 
     /**
@@ -1133,8 +1197,9 @@
       // Initialize labels object if it doesn't exist
       if (!selectedBar.labels) selectedBar.labels = {};
 
-      // If label of this type already exists, remove it and return
-      if (selectedBar.labels[type]) {
+      // If label of this type already exists, it means it's currently displayed.
+      // Remove it and return.
+      if (selectedBar.labels[type] && selectedBar.labels[type].element) {
         selectedBar.labels[type].element.remove(); // Remove DOM element
         delete selectedBar.labels[type];
         drawAll(); // Redraw to update visual state if necessary (e.g., arrow)
@@ -1158,35 +1223,34 @@
       label.style.textAlign = type === 'num' ? 'center' : 'left'; // Center numbers
       label.style.outline = 'none'; // Remove focus outline
 
-      // Position the label relative to the selected bar
+      // Store initial offsets relative to the bar's top-left corner
+      // These offsets will be used to maintain relative position during bar drags
       const barX = selectedBar.xRatio * gridSize;
       const barY = selectedBar.yRatio * gridSize;
-      const barWidth = selectedBar.widthRatio * gridSize;
+      const barWidth = selectedBar.widthRatio * gridSize; // Needed for num label centering
       
-      let initialLabelLeft, initialLabelTop;
+      let initialOffsetX, initialOffsetY;
 
       if (type === 'text') {
-        initialLabelLeft = barX - 70; // Position text label to the left of the bar
-        initialLabelTop = barY + 5;
-        label.style.left = `${initialLabelLeft}px`;
-        label.style.top = `${initialLabelTop}px`;
-        selectedBar.labels[type] = {
-            element: label, // Store reference to the DOM element
-            offsetX: initialLabelLeft - barX, // Fixed offset for text
-            offsetY: initialLabelTop - barY, // Fixed offset for text
-            value: label.value
-        };
+        initialOffsetX = -70; // Fixed offset to the left of the bar's origin
+        initialOffsetY = 5;   // Fixed offset from the bar's origin
+        label.style.left = `${barX + initialOffsetX}px`;
+        label.style.top = `${barY + initialOffsetY}px`;
       } else { // type === 'num'
-        initialLabelTop = barY - 45; // Adjusted: 45px above the bar
-        label.style.top = `${initialLabelTop}px`;
+        // For numbers, Y offset is fixed, X offset is dynamic (centered)
+        initialOffsetY = -45; // Adjusted: 45px above the bar
+        label.style.top = `${barY + initialOffsetY}px`;
         // Initial left will be set by the input listener based on content width
-        selectedBar.labels[type] = {
-            element: label,
-            offsetY: initialLabelTop - barY, // Fixed Y offset for num
-            value: label.value
-            // offsetX for num labels is dynamic, calculated in input listener
-        };
+        initialOffsetX = 0; // Placeholder, will be updated
       }
+
+      // Store reference to the DOM element and its offsets in the bar object
+      selectedBar.labels[type] = {
+          element: label,
+          offsetX: initialOffsetX,
+          offsetY: initialOffsetY,
+          value: label.value // Store initial value
+      };
 
       // Event listener to show editing UI when focused
       label.addEventListener('focus', function() {
@@ -1208,6 +1272,7 @@
         this.style.borderRadius = '0';
         this.style.whiteSpace = 'nowrap'; /* Prevent wrapping when blurred */
         this.style.textOverflow = 'ellipsis'; /* Add ellipsis when blurred */
+        selectedBar.labels[type].value = this.value; // Update stored value on blur
       });
 
       // Double-click to focus/edit
@@ -1228,16 +1293,66 @@
 
       label.addEventListener('input', function() {
         measureSpan.textContent = this.value || ' '; // Use ' ' for empty to get a minimum width
-        const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4)); // Max 150px
+        const desiredWidth = Math.max(40, measureSpan.offsetWidth + 4); // No max-width here
         this.style.width = `${desiredWidth}px`;
         
         if (this.dataset.type === 'num') {
-            const barX = currentBarForLabel.xRatio * gridSize;
-            const barWidth = currentBarForLabel.widthRatio * gridSize;
-            this.style.left = `${barX + barWidth / 2 - this.offsetWidth / 2}px`;
+            const barCurrentX = currentBarForLabel.xRatio * gridSize;
+            const barCurrentWidth = currentBarForLabel.widthRatio * gridSize;
+            this.style.left = `${barCurrentX + barCurrentWidth / 2 - this.offsetWidth / 2}px`;
+            // Update offsetX for num labels to reflect current centering
+            selectedBar.labels[type].offsetX = (barCurrentWidth / 2 - this.offsetWidth / 2);
         }
       });
       
+      // Make all labels draggable
+      let isLabelDragging = false;
+      let labelDragOffsetX, labelDragOffsetY; // Offset from mouse click to label's top-left corner
+
+      const startDrag = (e) => {
+        if (document.activeElement !== label) { // Only start dragging if not currently editing (input is not focused)
+          e.preventDefault(); // Prevent text selection
+          isLabelDragging = true;
+          const rect = label.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          labelDragOffsetX = clientX - rect.left; // Distance from click X to label's left edge
+          labelDragOffsetY = clientY - rect.top;  // Distance from click Y to label's top edge
+        }
+      };
+
+      const duringDrag = (e) => {
+        if (!isLabelDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        // Calculate new position relative to the canvas container
+        const newLeft = clientX - labelDragOffsetX;
+        const newTop = clientY - labelDragOffsetY;
+
+        label.style.left = `${newLeft}px`;
+        label.style.top = `${newTop}px`;
+
+        // Update the stored offsets relative to the bar's top-left for future redraws/saves
+        const currentBarX = selectedBar.xRatio * gridSize;
+        const currentBarY = selectedBar.yRatio * gridSize;
+        selectedBar.labels[type].offsetX = newLeft - currentBarX;
+        selectedBar.labels[type].offsetY = newTop - currentBarY;
+
+        if (e.touches) e.preventDefault(); // Prevent scrolling while dragging
+      };
+
+      const endDrag = () => {
+        isLabelDragging = false;
+      };
+
+      label.addEventListener('mousedown', startDrag);
+      label.addEventListener('touchstart', startDrag);
+      document.addEventListener('mousemove', duringDrag);
+      document.addEventListener('touchmove', duringDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
+
       // Append the label to the canvas container
       document.getElementById("canvas-container").appendChild(label);
       
@@ -1252,7 +1367,7 @@
     // Initial setup on window load
     window.addEventListener('load', () => {
       window.resizeCanvas(); // Set initial canvas size and draw background
-      // No initial bar added automatically anymore
+      window.activateSelectMode(document.getElementById('select-tool-button')); // Activate select tool on load
     });
     
     // Resize canvases when window is resized
@@ -1269,19 +1384,12 @@
         if (serializableBar.labels) {
           const serializedLabels = {};
           for (const type in serializableBar.labels) {
-            const labelData = serializableBar.labels[type]; // This is now { element, offsetX, offsetY, value } or { element, offsetY, value }
-            if (type === 'text') {
-                serializedLabels[type] = {
-                    value: labelData.element.value,
-                    offsetX: labelData.offsetX,
-                    offsetY: labelData.offsetY
-                };
-            } else { // type === 'num'
-                serializedLabels[type] = {
-                    value: labelData.element.value,
-                    offsetY: labelData.offsetY
-                };
-            }
+            const labelData = serializableBar.labels[type];
+            serializedLabels[type] = {
+                value: labelData.element.value,
+                offsetX: labelData.offsetX,
+                offsetY: labelData.offsetY
+            };
           }
           serializableBar.labels = serializedLabels;
         }
@@ -1293,7 +1401,7 @@
      * Helper function to restore labels from serializable data.
      * @param {Object} bar - The bar object to restore labels for.
      * @param {string} type - The type of label ('text' or 'num').
-     * @param {Object} labelData - The serializable label data ({ value, offsetX, offsetY } or { value, offsetY }).
+     * @param {Object} labelData - The serializable label data ({ value, offsetX, offsetY }).
      */
     function restoreLabel(bar, type, labelData) {
       const label = document.createElement('input');
@@ -1319,6 +1427,12 @@
       label.style.whiteSpace = 'nowrap';
       label.style.textOverflow = 'ellipsis';
 
+      // Set initial position using stored offsets relative to bar
+      const barX = bar.xRatio * gridSize;
+      const barY = bar.yRatio * gridSize;
+      label.style.left = `${barX + labelData.offsetX}px`;
+      label.style.top = `${barY + labelData.offsetY}px`;
+
 
       // Event listener to show editing UI when focused
       label.addEventListener('focus', function() {
@@ -1331,6 +1445,7 @@
         this.style.background = 'transparent'; this.style.border = 'none'; this.style.boxShadow = 'none'; this.style.padding = '0'; this.style.borderRadius = '0';
         this.style.whiteSpace = 'nowrap';
         this.style.textOverflow = 'ellipsis';
+        bar.labels[type].value = this.value; // Update stored value on blur
       });
       label.addEventListener('dblclick', function() {
         this.focus();
@@ -1345,22 +1460,70 @@
 
       label.addEventListener('input', function() {
         measureSpan.textContent = this.value || ' '; 
-        const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4));
+        const desiredWidth = Math.max(40, measureSpan.offsetWidth + 4); // No max-width here
         this.style.width = `${desiredWidth}px`; 
         
         if (this.dataset.type === 'num') {
           const barX = currentBarForRestoredLabel.xRatio * gridSize;
           const barWidth = currentBarForRestoredLabel.widthRatio * gridSize;
           this.style.left = `${barX + barWidth/2 - this.offsetWidth/2}px`;
+          // Update offsetX for num labels to reflect current centering
+          bar.labels[type].offsetX = (barWidth / 2 - label.offsetWidth / 2);
         }
       });
+
+      // Make all labels draggable
+      let isLabelDragging = false;
+      let labelDragOffsetX, labelDragOffsetY;
+
+      const startDrag = (e) => {
+        if (document.activeElement !== label) {
+          e.preventDefault();
+          isLabelDragging = true;
+          const rect = label.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          labelDragOffsetX = clientX - rect.left;
+          labelDragOffsetY = clientY - rect.top;
+        }
+      };
+
+      const duringDrag = (e) => {
+        if (!isLabelDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        const newLeft = clientX - labelDragOffsetX;
+        const newTop = clientY - labelDragOffsetY;
+
+        label.style.left = `${newLeft}px`;
+        label.style.top = `${newTop}px`;
+
+        const currentBarX = bar.xRatio * gridSize;
+        const currentBarY = bar.yRatio * gridSize;
+        bar.labels[type].offsetX = newLeft - currentBarX;
+        bar.labels[type].offsetY = newTop - currentBarY;
+
+        if (e.touches) e.preventDefault();
+      };
+
+      const endDrag = () => {
+        isLabelDragging = false;
+      };
+
+      label.addEventListener('mousedown', startDrag);
+      label.addEventListener('touchstart', startDrag);
+      document.addEventListener('mousemove', duringDrag);
+      document.addEventListener('touchmove', duringDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchend', endDrag);
       
       document.getElementById("canvas-container").appendChild(label);
       
       // Store reference to the DOM element and its offsets in the bar object
       bar.labels[type] = {
           element: label,
-          offsetX: labelData.offsetX, // Will be undefined for num, handled by updateLabels
+          offsetX: labelData.offsetX,
           offsetY: labelData.offsetY,
           value: label.value
       };
@@ -1374,31 +1537,28 @@
 
     /**
      * Toggles drawing mode on/off.
-     * @param {HTMLElement} btn - The button element that was clicked.
+     * @param {HTMLElement} btn - The button element that was clicked, or null if triggered by color picker.
      * @param {string} color - The color to set for the pen.
      */
     window.toggleDrawMode = function(btn, color) {
-      const isActive = btn && btn.classList.contains('active'); // Check if button exists and is active
-      // Remove 'active' class from all color buttons
-      document.querySelectorAll('.color-button').forEach(b => b.classList.remove('active'));
-      
-      if (!isActive) {
-        if (btn) btn.classList.add('active'); // If button exists, add 'active' class to the clicked button
-        penColor = color; // Set pen color
-        penMode = true; // Enable pen mode
-        currentMode = 'draw'; // Set mode to draw
-        drawingCanvas.style.pointerEvents = 'auto'; // Enable drawing canvas interaction
-        canvas.style.pointerEvents = 'none'; // Disable main canvas interaction
-      } else {
-        penMode = false; // Disable pen mode
-        currentMode = 'select'; // Set mode to select
-        drawingCanvas.style.pointerEvents = 'none'; // Disable drawing canvas interaction
-        canvas.style.pointerEvents = 'auto'; // Enable main canvas interaction
+      const isActive = btn.classList.contains('active');
+      deactivateAllTools(); // Deactivate all other tools first
+
+      if (!isActive) { // If it was not active, activate it
+          btn.classList.add('active');
+          penColor = color;
+          penMode = true;
+          currentMode = 'draw';
+          drawingCanvas.style.pointerEvents = 'auto';
+          canvas.style.pointerEvents = 'none';
+      } else { // If it was active, deactivate it and go back to select mode
+          // already deactivated by deactivateAllTools()
+          currentMode = 'select'; // Revert to select mode
+          document.getElementById('select-tool-button').classList.add('active'); // Activate select tool button
       }
-      // Hide floating bar tools when switching modes
       document.getElementById('floating-bar-tools').style.display = 'none';
-      selectedBar = null; // Deselect any bar
-      drawAll(); // Redraw to remove selection outline
+      selectedBar = null;
+      drawAll();
     }
 
     /**
@@ -1573,22 +1733,22 @@
       for (let bar of bars) {
         if (!bar.labels) continue; // Skip if no labels
         for (let type in bar.labels) {
-          const labelData = bar.labels[type]; // This now contains { element, offsetX, offsetY, value } or { element, offsetY, value }
+          const labelData = bar.labels[type]; // This now contains { element, offsetX, offsetY, value }
           const label = labelData.element; // Get the actual DOM element
 
           const barX = bar.xRatio * gridSize;
           const barY = bar.yRatio * gridSize;
           const barWidth = bar.widthRatio * gridSize; // Needed for num label centering
           
-          if (type === 'text') {
-            label.style.left = `${barX + labelData.offsetX}px`;
-            label.style.top = `${barY + labelData.offsetY}px`;
-          } else { // type === 'num'
-            // Only update Y based on fixed offsetY
-            label.style.top = `${barY + labelData.offsetY}px`;
-            // Recalculate X based on bar center and label's current width
-            // This relies on the label's 'input' listener having set its width correctly
+          // Use stored offsets relative to the bar's current position
+          label.style.left = `${barX + labelData.offsetX}px`;
+          label.style.top = `${barY + labelData.offsetY}px`;
+
+          // For 'num' labels, re-center horizontally based on current width
+          if (type === 'num') {
             label.style.left = `${barX + barWidth / 2 - label.offsetWidth / 2}px`;
+            // Update offsetX for num labels to reflect current centering
+            labelData.offsetX = (barWidth / 2 - label.offsetWidth / 2);
           }
         }
       }
@@ -1624,6 +1784,8 @@
       persistentProblemDisplay.style.display = 'none';
       window.closeSolutionBubble(); // Close and clear the solution bubble
       window.closeBarModelIdeaModal(); // Close and clear the bar model idea modal
+
+      window.activateSelectMode(document.getElementById('select-tool-button')); // Re-activate select mode by default
     }
 
     /**
@@ -2240,12 +2402,11 @@
 
     // --- Mouse Event Handlers for Main Canvas (Bar Interaction) ---
     canvas.addEventListener('mousedown', e => {
-      if (currentMode !== 'select') return;
       const r = canvas.getBoundingClientRect();
       const mx = e.clientX - r.left;
       const my = e.clientY - r.top;
 
-      if (barPlacementMode) {
+      if (currentMode === 'barPlacement') {
         // Place the bar at the clicked location
         barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
         barRedoStack = [];
@@ -2265,52 +2426,59 @@
         selectedBar = bar; // Select the newly placed bar
         drawAll();
         positionFloatingBarTools(); // Position floating tools for the new bar
-        barPlacementMode = false; // Exit placement mode
+        
+        // Reset mode after placing bar
+        barPlacementMode = false;
+        currentMode = 'select'; // Crucial: switch back to select mode
         canvas.style.cursor = 'default'; // Reset cursor
+        document.getElementById('select-tool-button').classList.add('active'); // Activate select tool button
+        document.querySelectorAll('.toolbar .color-button').forEach(b => b.classList.remove('active')); // Deactivate bar color buttons
         return; // Prevent further processing for this click
       }
 
-      // Check for resize handle interaction
-      for (let bar of bars.slice().reverse()) { // Iterate in reverse to select top-most bar
-        const bx = bar.xRatio * gridSize;
-        const by = bar.yRatio * gridSize;
-        const bw = bar.widthRatio * gridSize;
-        const bh = bar.heightRatio * gridSize;
+      if (currentMode === 'select') { // Only proceed with selection/drag/resize if in select mode
+        // Check for resize handle interaction
+        for (let bar of bars.slice().reverse()) { // Iterate in reverse to select top-most bar
+          const bx = bar.xRatio * gridSize;
+          const by = bar.yRatio * gridSize;
+          const bw = bar.widthRatio * gridSize;
+          const bh = bar.heightRatio * gridSize;
 
-        if (mx >= bx + bw - 10 && mx <= bx + bw + 10 && my >= by + bh / 2 - 10 && my <= by + bh / 2 + 10) {
-          selectedBar = bar;
-          isResizing = true;
-          positionFloatingBarTools(); // Position floating tools
-          barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
-          barRedoStack = [];
-          drawAll(); // Redraw to show selection outline
-          return;
+          if (mx >= bx + bw - 10 && mx <= bx + bw + 10 && my >= by + bh / 2 - 10 && my <= by + bh / 2 + 10) {
+            selectedBar = bar;
+            isResizing = true;
+            positionFloatingBarTools(); // Position floating tools
+            barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+            barRedoStack = [];
+            drawAll(); // Redraw to show selection outline
+            return;
+          }
         }
-      }
 
-      // Check for bar dragging interaction
-      for (let bar of bars.slice().reverse()) {
-        const bx = bar.xRatio * gridSize;
-        const by = bar.yRatio * gridSize;
-        const bw = bar.widthRatio * gridSize;
-        const bh = bar.heightRatio * gridSize;
+        // Check for bar dragging interaction
+        for (let bar of bars.slice().reverse()) {
+          const bx = bar.xRatio * gridSize;
+          const by = bar.yRatio * gridSize;
+          const bw = bar.widthRatio * gridSize;
+          const bh = bar.heightRatio * gridSize;
 
-        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
-          selectedBar = bar;
-          dragOffsetX = mx - bx;
-          dragOffsetY = my - by;
-          isDragging = true;
-          positionFloatingBarTools(); // Position floating tools
-          barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
-          barRedoStack = [];
-          drawAll(); // Redraw to show selection outline
-          return;
+          if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+            selectedBar = bar;
+            dragOffsetX = mx - bx;
+            dragOffsetY = my - by;
+            isDragging = true;
+            positionFloatingBarTools(); // Position floating tools
+            barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+            barRedoStack = [];
+            drawAll(); // Redraw to show selection outline
+            return;
+          }
         }
+        // If no bar or handle is selected, deselect any previously selected bar
+        selectedBar = null;
+        positionFloatingBarTools(); // Hide floating tools
+        drawAll(); // Redraw to remove selection outline
       }
-      // If no bar or handle is selected, deselect any previously selected bar
-      selectedBar = null;
-      positionFloatingBarTools(); // Hide floating tools
-      drawAll(); // Redraw to remove selection outline
     });
 
     canvas.addEventListener('mousemove', e => {
