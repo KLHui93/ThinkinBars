@@ -528,6 +528,33 @@
         margin-bottom: 10px;
     }
 
+    /* Floating bar tools styling */
+    #floating-bar-tools {
+      position: absolute;
+      display: none; /* Hidden by default */
+      z-index: 100;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    #floating-bar-tools .tool-button {
+      width: 40px; /* Smaller buttons for floating menu */
+      height: 40px;
+      padding: 6px;
+    }
+    #floating-bar-tools .tool-button img {
+      width: 24px;
+      height: 24px;
+    }
+    #floating-bar-tools .tool-button span {
+      font-size: 16px; /* Smaller font for floating menu */
+    }
+
+
     @media (max-width: 768px) {
         #solutionBubble, #barModelIdeaModal {
             width: calc(100% - 40px); /* Adjust width for small screens */
@@ -537,6 +564,22 @@
         }
         #barModelIdeaModal {
             top: calc(50% + 100px); /* Adjust for smaller screens */
+        }
+        #floating-bar-tools {
+          padding: 6px;
+          gap: 2px;
+        }
+        #floating-bar-tools .tool-button {
+          width: 36px;
+          height: 36px;
+          padding: 4px;
+        }
+        #floating-bar-tools .tool-button img {
+          width: 20px;
+          height: 20px;
+        }
+        #floating-bar-tools .tool-button span {
+          font-size: 14px;
         }
     }
   </style>
@@ -617,23 +660,37 @@
     <canvas id="drawingCanvas"></canvas>
   </div>
   
+  <!-- Floating Bar Tools (appears when a bar is selected) -->
+  <div id="floating-bar-tools">
+    <button onclick="window.addLabel('text')" class="tool-button" title="Label Text">
+      <span style="font-size: 20px;">ABC</span>
+    </button>
+    <button onclick="window.addLabel('num')" class="tool-button" title="Label Number">
+      <span style="font-size: 20px;">123</span>
+    </button>
+    <button onclick="window.toggleArrow()" class="tool-button" title="Toggle Arrow">
+      <img src="https://img.icons8.com/ios-glyphs/30/resize-diagonal.png" alt="Arrow Icon"/>
+    </button>
+    <button onclick="window.deleteSelectedElement()" class="tool-button" title="Delete Bar">
+      <img src="https://img.icons8.com/ios-glyphs/30/trash--v1.png" alt="Delete Icon"/>
+    </button>
+    <button onclick="window.splitBar()" class="tool-button" title="Split Bar">
+      <img src="https://img.icons8.com/ios-glyphs/30/divide.png" alt="Split Icon"/>
+    </button>
+  </div>
+
   <!-- Toolbar for controls -->
   <div class="toolbar" id="toolbar">
-    <!-- Grid Size Slider -->
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button class="tool-button" title="Grid Size">
-        <img src="https://img.icons8.com/ios-filled/30/grid.png" alt="Grid Icon"/>
-      </button>
-      <input id="gridSlider" type="range" min="40" max="120" value="80" oninput="window.resizeCanvas();">
-    </div>
-
     <!-- Drawing Tools -->
     <div style="display:flex;align-items:center;gap:8px;">
-      <img src="https://img.icons8.com/ios-glyphs/30/pencil-tip.png" title="Pen Size" style="width: 28px; height: 28px;" alt="Pen Icon">
+      <img src="https://img.icons8.com/ios-glyphs/30/pencil-tip.png" title="Pen Size" alt="Pen Icon" style="width: 28px; height: 28px;">
       <input type="range" min="1" max="10" value="5" oninput="penSize=this.value">
       <button onclick="window.toggleDrawMode(this, 'black')" class="tool-button color-button" style="background:black" title="Black Pen"></button>
       <button onclick="window.toggleDrawMode(this, 'red')" class="tool-button color-button" style="background:red" title="Red Pen"></button>
       <button onclick="window.toggleDrawMode(this, 'blue')" class="tool-button color-button" style="background:blue" title="Blue Pen"></button>
+      <button onclick="window.toggleDrawMode(this, 'purple')" class="tool-button color-button" style="background:purple" title="Purple Pen"></button>
+      <button onclick="window.toggleDrawMode(this, 'orange')" class="tool-button color-button" style="background:orange" title="Orange Pen"></button>
+      <button onclick="window.toggleDrawMode(this, 'green')" class="tool-button color-button" style="background:green" title="Green Pen"></button>
       <button onclick="window.undoDraw()" class="tool-button" title="Undo Drawing">
         <img src="https://img.icons8.com/ios-glyphs/30/undo.png" alt="Undo Icon"/>
       </button>
@@ -642,33 +699,14 @@
       </button>
     </div>
 
-    <!-- Bar Manipulation Tools -->
+    <!-- Bar Color/Type Selection (for adding new bars) -->
     <div style="display:flex;align-items:center;gap:6px;">
-      <span id="bar-tools" style="display:flex;gap:6px;">
-        <button onclick="window.addLabel('text')" class="tool-button" title="Label Text">
-          <span style="font-size: 20px;">ABC</span>
-        </button>
-        <button onclick="window.addLabel('num')" class="tool-button" title="Label Number">
-          <span style="font-size: 20px;">123</span>
-        </button>
-        <button onclick="window.toggleArrow()" class="tool-button" title="Toggle Arrow">
-          <img src="https://img.icons8.com/ios-glyphs/30/resize-diagonal.png" alt="Arrow Icon"/>
-        </button>
-        <button onclick="window.deleteSelectedBar()" class="tool-button" title="Delete Bar">
-          <img src="https://img.icons8.com/ios-glyphs/30/trash--v1.png" alt="Delete Icon"/>
-        </button>
-        <button onclick="window.splitBar()" class="tool-button" title="Split Bar">
-          <img src="https://img.icons8.com/ios-glyphs/30/divide.png" alt="Split Icon"/>
-        </button>
-      </span>
-      
-      <!-- Bar Color/Type Selection -->
-      <button onclick="window.addBar('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
-      <button onclick="window.addBar('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
-      <button onclick="window.addBar('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
-      <button onclick="window.addBar('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
-      <button onclick="window.addBar('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
-      <button onclick="window.addBar('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
+      <button onclick="window.startBarPlacement('white', true)" class="tool-button color-button" style="background:white; border: 2px dashed #999;" title="Dashed White Bar"></button>
+      <button onclick="window.startBarPlacement('black', true)" class="tool-button color-button" style="background:black; border: 2px dashed #999;" title="Dashed Black Bar"></button>
+      <button onclick="window.startBarPlacement('#f8bbd0')" class="tool-button color-button" style="background:#f8bbd0" title="Pink Bar"></button>
+      <button onclick="window.startBarPlacement('#fff9c4')" class="tool-button color-button" style="background:#fff9c4" title="Yellow Bar"></button>
+      <button onclick="window.startBarPlacement('#b3e5fc')" class="tool-button color-button" style="background:#b3e5fc" title="Blue Bar"></button>
+      <button onclick="window.startBarPlacement('#c8e6c9')" class="tool-button color-button" style="background:#c8e6c9" title="Green Bar"></button>
 
       <!-- Bar Undo/Redo -->
       <button onclick="window.undoBar()" class="tool-button" title="Undo Bar Action">
@@ -845,19 +883,12 @@
     const drawingCtx = drawingCanvas.getContext('2d');
     const persistentProblemDisplay = document.getElementById('persistentProblemDisplay');
     
-    // Grid settings: dynamically set min/max based on window height
-    const minGrid = Math.floor((window.innerHeight - 80) / 10); // 80px for toolbar
-    const maxGrid = Math.floor((window.innerHeight - 80) / 8);
-    let gridSize = maxGrid; // Initial grid size
-    document.getElementById('gridSlider').min = minGrid;
-    document.getElementById('gridSlider').max = maxGrid;
-    document.getElementById('gridSlider').value = gridSize;
+    // Fixed unit for bar sizing and positioning, replacing the old 'gridSize' concept
+    const gridSize = 80; // Fixed grid size
     
     // Application state variables
     let bars = []; // Array to store bar objects
-    let textboxes = []; // Array to store textbox DOM elements (removed, but kept for cleanup)
     let selectedBar = null; // Currently selected bar for manipulation
-    let selectedTextBox = null; // Currently selected textbox for manipulation (removed)
     let penSize = 2; // Size of the drawing pen
     let penColor = 'black'; // Color of the drawing pen
     let isDrawing = false; // Flag for mouse drawing
@@ -876,6 +907,10 @@
     let drawingImage = null; // Stores the current drawing canvas image data
     let penMode = false; // Flag to indicate if pen mode is active
 
+    let barPlacementMode = false; // New: Flag for placing a bar
+    let barColorToPlace = '';    // New: Stores color of bar to be placed
+    let barDashedToPlace = false; // New: Stores dashed property of bar to be placed
+
     // Stores the language of the last generated problem
     let lastProblemLanguage = 'English'; 
 
@@ -891,7 +926,7 @@
       'Backspace': { func: window.deleteSelectedElement, description: 'Delete Selected Bar/Textbox' },
       'KeyA': { func: window.toggleArrow, description: 'Toggle Arrow' },
       'KeyD': { func: window.toggleDrawMode, args: [null, penColor], description: 'Toggle Draw Mode' },
-      'KeyB': { func: window.addBar, args: ['#b3e5fc'], description: 'Add Blue Bar' },
+      'KeyB': { func: window.startBarPlacement, args: ['#b3e5fc'], description: 'Start placing Blue Bar' }, // Updated shortcut
       'KeyC': { func: window.clearAll, description: 'Clear All' },
     };
 
@@ -930,7 +965,7 @@
       bgCanvas.width = canvas.width = drawingCanvas.width = width;
       bgCanvas.height = canvas.height = drawingCanvas.height = height;
       
-      // Redraw background grid and all bars
+      // Redraw background (now just a white fill) and all bars
       drawBackground();
       drawAll();
       
@@ -941,6 +976,7 @@
 
       // Update positions of HTML labels
       updateLabels();
+      positionFloatingBarTools(); // Reposition floating tools on resize
     }
 
     /**
@@ -989,7 +1025,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear main canvas
       
       for (const bar of bars) {
-        // Calculate bar dimensions based on ratios and grid size
+        // Calculate bar dimensions based on ratios and gridSize
         const bx = bar.xRatio * gridSize;
         const by = bar.yRatio * gridSize;
         const bw = bar.widthRatio * gridSize;
@@ -1012,8 +1048,8 @@
 
         // Draw arrow if enabled for the bar
         if (bar.arrow) {
-          // Position arrow 20px above the bar, which is below the number label (at y-45)
-          const y = by - 20; // Adjusted from -25 to -20 to move it down further
+          // Position arrow 20px above the bar
+          const y = by - 20; 
           ctx.strokeStyle = bar.dashed ? 'red' : '#000'; // Red arrow for dashed bars
           ctx.lineWidth = 2; // Thicker arrow line
 
@@ -1026,9 +1062,9 @@
           // Draw arrowheads
           ctx.fillStyle = ctx.strokeStyle;
           ctx.beginPath();  
-          ctx.moveTo(bx + 8, y - 5);  // Adjusted from 10 to 8
+          ctx.moveTo(bx + 8, y - 5);  
           ctx.lineTo(bx, y);  
-          ctx.lineTo(bx + 8, y + 5);  // Adjusted from 10 to 8
+          ctx.lineTo(bx + 8, y + 5);  
           ctx.fill();
           ctx.beginPath();  
           ctx.moveTo(bx + bw - 8, y - 5);  
@@ -1053,7 +1089,33 @@
             ctx.setLineDash([]); // Reset line dash
           }
         }
+        
+        // Draw selection outline if this bar is selected
+        if (bar === selectedBar) {
+          ctx.strokeStyle = '#007bff'; // Blue outline for selection
+          ctx.lineWidth = 3;
+          ctx.strokeRect(bx, by, bw, bh);
+        }
       }
+    }
+
+    /**
+     * Initiates the bar placement mode.
+     * @param {string} color - The fill color of the bar.
+     * @param {boolean} [dashed=false] - Whether the bar should have a dashed border.
+     */
+    window.startBarPlacement = function(color, dashed = false) {
+      barPlacementMode = true;
+      barColorToPlace = color;
+      barDashedToPlace = dashed;
+      // Optionally, provide visual feedback to the user that they are in placement mode
+      canvas.style.cursor = 'crosshair'; 
+      // Deselect any active bar tool buttons
+      document.querySelectorAll('.tool-button.color-button').forEach(b => b.classList.remove('active'));
+      // Hide floating bar tools when in placement mode
+      document.getElementById('floating-bar-tools').style.display = 'none';
+      selectedBar = null; // Deselect any bar
+      drawAll(); // Redraw to remove selection outline
     }
 
     /**
@@ -1073,7 +1135,7 @@
 
       // If label of this type already exists, remove it and return
       if (selectedBar.labels[type]) {
-        selectedBar.labels[type].remove();
+        selectedBar.labels[type].element.remove(); // Remove DOM element
         delete selectedBar.labels[type];
         drawAll(); // Redraw to update visual state if necessary (e.g., arrow)
         return;
@@ -1101,13 +1163,29 @@
       const barY = selectedBar.yRatio * gridSize;
       const barWidth = selectedBar.widthRatio * gridSize;
       
+      let initialLabelLeft, initialLabelTop;
+
       if (type === 'text') {
-        label.style.left = `${barX - 70}px`; // Position text label to the left of the bar
-        label.style.top = `${barY + 5}px`;
-      } else {
-        // Position number label above the bar, centered, further up to clear the arrow
-        label.style.left = `${barX + barWidth / 2 - 10}px`; // Placeholder for initial centering
-        label.style.top = `${barY - 45}px`; // Adjusted: 45px above the bar
+        initialLabelLeft = barX - 70; // Position text label to the left of the bar
+        initialLabelTop = barY + 5;
+        label.style.left = `${initialLabelLeft}px`;
+        label.style.top = `${initialLabelTop}px`;
+        selectedBar.labels[type] = {
+            element: label, // Store reference to the DOM element
+            offsetX: initialLabelLeft - barX, // Fixed offset for text
+            offsetY: initialLabelTop - barY, // Fixed offset for text
+            value: label.value
+        };
+      } else { // type === 'num'
+        initialLabelTop = barY - 45; // Adjusted: 45px above the bar
+        label.style.top = `${initialLabelTop}px`;
+        // Initial left will be set by the input listener based on content width
+        selectedBar.labels[type] = {
+            element: label,
+            offsetY: initialLabelTop - barY, // Fixed Y offset for num
+            value: label.value
+            // offsetX for num labels is dynamic, calculated in input listener
+        };
       }
 
       // Event listener to show editing UI when focused
@@ -1137,7 +1215,7 @@
         this.focus();
       });
 
-      // Dynamic width adjustment for the input field
+      // Dynamic width adjustment for the input field and horizontal centering for 'num' labels
       const measureSpan = document.createElement('span');
       measureSpan.style.visibility = 'hidden';
       measureSpan.style.whiteSpace = 'pre'; // Preserve whitespace
@@ -1145,60 +1223,23 @@
       measureSpan.style.fontFamily = 'Inter, sans-serif'; // Match label font
       document.body.appendChild(measureSpan); // Append to body to measure correctly
 
+      // Capture the bar object for the label's input listener
+      const currentBarForLabel = selectedBar;
+
       label.addEventListener('input', function() {
         measureSpan.textContent = this.value || ' '; // Use ' ' for empty to get a minimum width
         const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4)); // Max 150px
         this.style.width = `${desiredWidth}px`;
         
-        // Re-center number labels dynamically
-        if (type === 'num') {
-          // Recalculate left position based on new width
-          const currentBarX = selectedBar.xRatio * gridSize;
-          const currentBarWidth = selectedBar.widthRatio * gridSize;
-          this.style.left = `${currentBarX + currentBarWidth / 2 - this.offsetWidth / 2}px`;
+        if (this.dataset.type === 'num') {
+            const barX = currentBarForLabel.xRatio * gridSize;
+            const barWidth = currentBarForLabel.widthRatio * gridSize;
+            this.style.left = `${barX + barWidth / 2 - this.offsetWidth / 2}px`;
         }
       });
       
-      // Make all labels draggable
-      let isLabelDragging = false;
-      let labelOffsetX, labelOffsetY; // Offset from mouse click to label's top-left corner
-
-      const startDrag = (e) => {
-        if (document.activeElement !== label) { // Only start dragging if not currently editing (input is not focused)
-          e.preventDefault(); // Prevent text selection
-          isLabelDragging = true;
-          const rect = label.getBoundingClientRect();
-          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-          labelOffsetX = clientX - rect.left; // Distance from click X to label's left edge
-          labelOffsetY = clientY - rect.top;  // Distance from click Y to label's top edge
-        }
-      };
-
-      const duringDrag = (e) => {
-        if (!isLabelDragging) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        // Set new position directly based on current mouse/touch position minus initial offset
-        label.style.left = `${clientX - labelOffsetX}px`;
-        label.style.top = `${clientY - labelOffsetY}px`;
-        if (e.touches) e.preventDefault(); // Prevent scrolling while dragging
-      };
-
-      const endDrag = () => {
-        isLabelDragging = false;
-      };
-
-      label.addEventListener('mousedown', startDrag);
-      label.addEventListener('touchstart', startDrag);
-      document.addEventListener('mousemove', duringDrag);
-      document.addEventListener('touchmove', duringDrag);
-      document.addEventListener('mouseup', endDrag);
-      document.addEventListener('touchend', endDrag);
-
       // Append the label to the canvas container
       document.getElementById("canvas-container").appendChild(label);
-      selectedBar.labels[type] = label; // Store reference in the bar object
       
       // Trigger initial width calculation and positioning
       const event = new Event('input');
@@ -1206,14 +1247,12 @@
       
       // Remove the temporary measureSpan after use to prevent whitespace
       document.body.removeChild(measureSpan);
-      
-      // label.focus(); // Auto-focus removed, now requires double-click
     }
 
     // Initial setup on window load
     window.addEventListener('load', () => {
-      window.resizeCanvas(); // Set initial canvas size and draw grid
-      window.addBar('#b3e5fc'); // Add an initial blue bar
+      window.resizeCanvas(); // Set initial canvas size and draw background
+      // No initial bar added automatically anymore
     });
     
     // Resize canvases when window is resized
@@ -1230,16 +1269,19 @@
         if (serializableBar.labels) {
           const serializedLabels = {};
           for (const type in serializableBar.labels) {
-            const labelEl = serializableBar.labels[type];
-            serializedLabels[type] = {
-              value: labelEl.value,
-              style: {
-                left: labelEl.style.left,
-                top: labelEl.style.top,
-                width: labelEl.style.width,
-                textAlign: labelEl.style.textAlign
-              }
-            };
+            const labelData = serializableBar.labels[type]; // This is now { element, offsetX, offsetY, value } or { element, offsetY, value }
+            if (type === 'text') {
+                serializedLabels[type] = {
+                    value: labelData.element.value,
+                    offsetX: labelData.offsetX,
+                    offsetY: labelData.offsetY
+                };
+            } else { // type === 'num'
+                serializedLabels[type] = {
+                    value: labelData.element.value,
+                    offsetY: labelData.offsetY
+                };
+            }
           }
           serializableBar.labels = serializedLabels;
         }
@@ -1250,7 +1292,8 @@
     /**
      * Helper function to restore labels from serializable data.
      * @param {Object} bar - The bar object to restore labels for.
-     * @param {Object} labelData - The serializable label data.
+     * @param {string} type - The type of label ('text' or 'num').
+     * @param {Object} labelData - The serializable label data ({ value, offsetX, offsetY } or { value, offsetY }).
      */
     function restoreLabel(bar, type, labelData) {
       const label = document.createElement('input');
@@ -1259,19 +1302,31 @@
       label.dataset.type = type;
       label.classList.add('bar-label');
       
-      Object.assign(label.style, labelData.style);
       label.style.position = 'absolute';
       label.style.fontSize = '20px';
       label.style.zIndex = '100';
       label.style.cursor = 'pointer';
       label.style.minWidth = '40px';
+      label.style.textAlign = type === 'num' ? 'center' : 'left';
       label.style.outline = 'none';
 
+      // Restore styling based on blur state (transparent)
+      label.style.background = 'transparent';
+      label.style.border = 'none';
+      label.style.boxShadow = 'none';
+      label.style.padding = '0';
+      label.style.borderRadius = '0';
+      label.style.whiteSpace = 'nowrap';
+      label.style.textOverflow = 'ellipsis';
+
+
+      // Event listener to show editing UI when focused
       label.addEventListener('focus', function() {
         this.style.background = '#fff'; this.style.border = '1px solid #888'; this.style.boxShadow = '0 0 2px rgba(0,0,0,0.2)'; this.style.padding = '1px 4px'; this.style.borderRadius = '3px';
         this.style.whiteSpace = 'normal';
         this.style.textOverflow = 'clip';
       });
+      // Event listener to hide editing UI when blurred
       label.addEventListener('blur', function() {
         this.style.background = 'transparent'; this.style.border = 'none'; this.style.boxShadow = 'none'; this.style.padding = '0'; this.style.borderRadius = '0';
         this.style.whiteSpace = 'nowrap';
@@ -1280,72 +1335,41 @@
       label.addEventListener('dblclick', function() {
         this.focus();
       });
+
       const measureSpan = document.createElement('span');
       measureSpan.style.visibility = 'hidden'; measureSpan.style.whiteSpace = 'pre'; measureSpan.style.fontSize = '20px'; measureSpan.style.fontFamily = 'Inter, sans-serif';
       document.body.appendChild(measureSpan);
+
+      // Capture the bar object for the label's input listener
+      const currentBarForRestoredLabel = bar;
+
       label.addEventListener('input', function() {
         measureSpan.textContent = this.value || ' '; 
         const desiredWidth = Math.min(150, Math.max(40, measureSpan.offsetWidth + 4));
         this.style.width = `${desiredWidth}px`; 
-        if (type === 'num') {
-          const barX = bar.xRatio * gridSize;
-          const barWidth = bar.widthRatio * gridSize;
+        
+        if (this.dataset.type === 'num') {
+          const barX = currentBarForRestoredLabel.xRatio * gridSize;
+          const barWidth = currentBarForRestoredLabel.widthRatio * gridSize;
           this.style.left = `${barX + barWidth/2 - this.offsetWidth/2}px`;
         }
       });
-
-      let isLabelDragging = false; let offsetX, offsetY;
-      const startDrag = (e) => {
-        if (document.activeElement !== label) { e.preventDefault(); isLabelDragging = true; offsetX = e.clientX - label.getBoundingClientRect().left; offsetY = e.clientY - label.getBoundingClientRect().top; }
-      };
-      const duringDrag = (e) => {
-        if (!isLabelDragging) return; label.style.left = `${e.clientX - offsetX}px`; label.style.top = `${e.clientY - offsetY}px`;
-      };
-      const endDrag = () => { isLabelDragging = false; };
-      label.addEventListener('mousedown', startDrag);
-      label.addEventListener('touchstart', startDrag);
-      document.addEventListener('mousemove', duringDrag);
-      document.addEventListener('touchmove', duringDrag);
-      document.addEventListener('mouseup', endDrag);
-      document.addEventListener('touchend', endDrag);
       
       document.getElementById("canvas-container").appendChild(label);
-      bar.labels[type] = label;
+      
+      // Store reference to the DOM element and its offsets in the bar object
+      bar.labels[type] = {
+          element: label,
+          offsetX: labelData.offsetX, // Will be undefined for num, handled by updateLabels
+          offsetY: labelData.offsetY,
+          value: label.value
+      };
+
+      // Trigger initial width calculation and positioning
       label.dispatchEvent(new Event('input'));
+      
       // Remove the temporary measureSpan after use to prevent whitespace
       document.body.removeChild(measureSpan);
-    }
-
-    /**
-     * Adds a new bar to the canvas.
-     * @param {string} color - The fill color of the bar.
-     * @param {boolean} [dashed=false] - Whether the bar should have a dashed border.
-     */
-    window.addBar = function(color, dashed = false) {
-      // Save current state for undo
-      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
-      barRedoStack = []; // Clear redo stack on new action
-
-      // Changed default Y position for the first bar to be lower
-      let yRatio = 3; // Default Y position of 3 grid units from top (adjusted from 4)
-      if (bars.length > 0) {
-        // Position new bar below the last one
-        const last = bars[bars.length - 1];
-        yRatio = last.yRatio + 2; // 2 grid units below
-      }
-      const bar = {
-        widthRatio: 4,    // Default width of 4 grid units
-        heightRatio: 1,   // Default height of 1 grid unit
-        xRatio: 3,        // Default X position of 3 grid units from left
-        yRatio,           // Calculated Y position
-        color,
-        arrow: false,     // No arrow by default
-        dashed,           // Dashed property
-        split: 0,         // Not split by default
-        labels: {}        // Object to hold associated HTML labels
-      };
-      bars.push(bar);
-      drawAll(); // Redraw all bars
     }
 
     /**
@@ -1371,6 +1395,10 @@
         drawingCanvas.style.pointerEvents = 'none'; // Disable drawing canvas interaction
         canvas.style.pointerEvents = 'auto'; // Enable main canvas interaction
       }
+      // Hide floating bar tools when switching modes
+      document.getElementById('floating-bar-tools').style.display = 'none';
+      selectedBar = null; // Deselect any bar
+      drawAll(); // Redraw to remove selection outline
     }
 
     /**
@@ -1421,6 +1449,7 @@
         });
         updateLabels();
         drawAll();
+        positionFloatingBarTools(); // Reposition floating tools after undo
       }
     }
 
@@ -1448,6 +1477,7 @@
         });
         updateLabels();
         drawAll();
+        positionFloatingBarTools(); // Reposition floating tools after redo
       }
     }
 
@@ -1460,6 +1490,7 @@
         barRedoStack = [];
         selectedBar.arrow = !selectedBar.arrow; // Toggle arrow property
         drawAll(); // Redraw to show/hide arrow
+        positionFloatingBarTools(); // Reposition floating tools in case arrow affects bar bounds visually
       }
     }
 
@@ -1494,6 +1525,7 @@
             selectedBar.split = i; // Set split count
             menu.style.display = 'none'; // Hide menu after selection
             drawAll(); // Redraw bar with splits
+            positionFloatingBarTools(); // Reposition floating tools
           };
           menu.appendChild(b);
         }
@@ -1513,30 +1545,6 @@
     /**
      * Deletes the currently selected bar or textbox.
      */
-    window.deleteSelectedBar = function() {
-      // Save current state for undo before deletion
-      barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
-      barRedoStack = [];
-
-      if (selectedBar) {
-        // Remove associated HTML labels from the DOM
-        if (selectedBar.labels) {
-          for (let type in selectedBar.labels) {
-            selectedBar.labels[type].remove();
-          }
-        }
-
-        // Filter out the selected bar from the array
-        bars = bars.filter(b => b !== selectedBar);
-        selectedBar = null; // Deselect the bar
-        document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
-        drawAll(); // Redraw all remaining bars
-      } 
-    }
-
-    /**
-     * Deletes the currently selected bar or textbox.
-     */
     window.deleteSelectedElement = function() {
       // Save current state for undo before deletion
       barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
@@ -1546,14 +1554,14 @@
         // Remove associated HTML labels from the DOM
         if (selectedBar.labels) {
           for (let type in selectedBar.labels) {
-            selectedBar.labels[type].remove();
+            selectedBar.labels[type].element.remove(); // Remove DOM element
           }
         }
 
         // Filter out the selected bar from the array
         bars = bars.filter(b => b !== selectedBar);
         selectedBar = null; // Deselect the bar
-        document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
+        document.getElementById("floating-bar-tools").style.display = "none"; // Hide floating bar tools
         drawAll(); // Redraw all remaining bars
       } 
     }
@@ -1565,19 +1573,22 @@
       for (let bar of bars) {
         if (!bar.labels) continue; // Skip if no labels
         for (let type in bar.labels) {
-          const label = bar.labels[type];
+          const labelData = bar.labels[type]; // This now contains { element, offsetX, offsetY, value } or { element, offsetY, value }
+          const label = labelData.element; // Get the actual DOM element
+
           const barX = bar.xRatio * gridSize;
           const barY = bar.yRatio * gridSize;
-          const barWidth = bar.widthRatio * gridSize;
+          const barWidth = bar.widthRatio * gridSize; // Needed for num label centering
           
           if (type === 'text') {
-            label.style.left = `${barX - 70}px`; // Keep text label to the left
-            label.style.top = `${barY + 5}px`;
-          } else {
-            // Trigger input event to recalculate width and re-center for number labels
-            const event = new Event('input');
-            label.dispatchEvent(event);
-            label.style.top = `${barY - 45}px`; // Adjusted: 45px above the bar
+            label.style.left = `${barX + labelData.offsetX}px`;
+            label.style.top = `${barY + labelData.offsetY}px`;
+          } else { // type === 'num'
+            // Only update Y based on fixed offsetY
+            label.style.top = `${barY + labelData.offsetY}px`;
+            // Recalculate X based on bar center and label's current width
+            // This relies on the label's 'input' listener having set its width correctly
+            label.style.left = `${barX + barWidth / 2 - label.offsetWidth / 2}px`;
           }
         }
       }
@@ -1604,10 +1615,8 @@
           el.remove();
         }
       });
-      textboxes = []; // Clear textboxes array (should be empty now)
-      selectedTextBox = null; // Deselect any textbox (should be null now)
       
-      document.getElementById("bar-tools").style.display = "none"; // Hide bar tools
+      document.getElementById("floating-bar-tools").style.display = "none"; // Hide floating bar tools
       drawAll(); // Redraw (will be empty)
 
       // Clear persistent problem display and solution bubble
@@ -1807,7 +1816,6 @@
 
         chatHistory.push({ role: "user", parts: [{ text: prompt }] });
         const payload = { contents: chatHistory };
-        // NOTE: Replace with your actual API Key. Leaving it blank may limit model usage.
         const apiKey = "AIzaSyAOEDAX_YUrTPgsWnbXUar3VGcz4LqHCGk"; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         
@@ -2017,7 +2025,7 @@
       const offsetX = -minX + padding;
       const offsetY = -minY + padding;
 
-      // Draw background grid (shifted)
+      // Draw background (shifted)
       exportCtx.drawImage(bgCanvas, offsetX, offsetY, bgCanvas.width, bgCanvas.height);
       // Draw bars (shifted)
       exportCtx.drawImage(canvas, offsetX, offsetY, canvas.width, canvas.height);
@@ -2194,12 +2202,73 @@
       }
     }
 
+    /**
+     * Positions the floating bar tools menu near the selected bar.
+     */
+    function positionFloatingBarTools() {
+      const floatingTools = document.getElementById('floating-bar-tools');
+      if (selectedBar && floatingTools) {
+        const barX = selectedBar.xRatio * gridSize;
+        const barY = selectedBar.yRatio * gridSize;
+        const barWidth = selectedBar.widthRatio * gridSize;
+        const barHeight = selectedBar.heightRatio * gridSize;
+
+        const canvasRect = canvas.getBoundingClientRect();
+        const containerRect = document.getElementById('canvas-container').getBoundingClientRect();
+
+        let targetLeft = barX + barWidth / 2 - floatingTools.offsetWidth / 2;
+        let targetTop;
+
+        // Force position below the bar as requested
+        targetTop = barY + barHeight + 10; // 10px padding below
+
+        // Adjust for container offset (canvas relative to its container)
+        targetLeft += canvasRect.left - containerRect.left;
+        targetTop += canvasRect.top - containerRect.top;
+
+        // Ensure it stays within the canvas container bounds
+        targetLeft = Math.max(0, Math.min(targetLeft, containerRect.width - floatingTools.offsetWidth));
+        targetTop = Math.max(0, Math.min(targetTop, containerRect.height - floatingTools.offsetHeight));
+
+        floatingTools.style.left = `${targetLeft}px`;
+        floatingTools.style.top = `${targetTop}px`;
+        floatingTools.style.display = 'flex';
+      } else if (floatingTools) {
+        floatingTools.style.display = 'none';
+      }
+    }
+
     // --- Mouse Event Handlers for Main Canvas (Bar Interaction) ---
     canvas.addEventListener('mousedown', e => {
       if (currentMode !== 'select') return;
       const r = canvas.getBoundingClientRect();
       const mx = e.clientX - r.left;
       const my = e.clientY - r.top;
+
+      if (barPlacementMode) {
+        // Place the bar at the clicked location
+        barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
+        barRedoStack = [];
+
+        const bar = {
+          widthRatio: 4,    // Default width of 4 units
+          heightRatio: 1,   // Default height of 1 unit
+          xRatio: Math.round(mx / gridSize), // Snap to grid unit
+          yRatio: Math.round(my / gridSize), // Snap to grid unit
+          color: barColorToPlace,
+          arrow: false,
+          dashed: barDashedToPlace,
+          split: 0,
+          labels: {}
+        };
+        bars.push(bar);
+        selectedBar = bar; // Select the newly placed bar
+        drawAll();
+        positionFloatingBarTools(); // Position floating tools for the new bar
+        barPlacementMode = false; // Exit placement mode
+        canvas.style.cursor = 'default'; // Reset cursor
+        return; // Prevent further processing for this click
+      }
 
       // Check for resize handle interaction
       for (let bar of bars.slice().reverse()) { // Iterate in reverse to select top-most bar
@@ -2211,9 +2280,10 @@
         if (mx >= bx + bw - 10 && mx <= bx + bw + 10 && my >= by + bh / 2 - 10 && my <= by + bh / 2 + 10) {
           selectedBar = bar;
           isResizing = true;
-          document.getElementById("bar-tools").style.display = "flex";
+          positionFloatingBarTools(); // Position floating tools
           barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
           barRedoStack = [];
+          drawAll(); // Redraw to show selection outline
           return;
         }
       }
@@ -2230,16 +2300,17 @@
           dragOffsetX = mx - bx;
           dragOffsetY = my - by;
           isDragging = true;
-          document.getElementById("bar-tools").style.display = "flex";
+          positionFloatingBarTools(); // Position floating tools
           barUndoStack.push(JSON.parse(JSON.stringify({ bars: getSerializableBarsState() })));
           barRedoStack = [];
+          drawAll(); // Redraw to show selection outline
           return;
         }
       }
       // If no bar or handle is selected, deselect any previously selected bar
       selectedBar = null;
-      document.getElementById("bar-tools").style.display = "none";
-      drawAll();
+      positionFloatingBarTools(); // Hide floating tools
+      drawAll(); // Redraw to remove selection outline
     });
 
     canvas.addEventListener('mousemove', e => {
@@ -2254,6 +2325,7 @@
         selectedBar.widthRatio = Math.max(1, Math.round((mx - selectedBar.xRatio * gridSize) / snapUnit) * snapUnit / gridSize);
         updateLabels();
         drawAll();
+        positionFloatingBarTools(); // Reposition floating tools
         return;
       }
 
@@ -2262,6 +2334,7 @@
         selectedBar.yRatio = Math.round((my - dragOffsetY) / gridSize);
         updateLabels();
         drawAll();
+        positionFloatingBarTools(); // Reposition floating tools
       }
     });
 
